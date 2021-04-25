@@ -2,14 +2,25 @@
 # Provide any number of Universal VTT json files as individual arguments after that
 # Each provided file will be included in the module as a map
 
+from xml.etree.ElementTree import Element, SubElement, tostring
+from zipfile import ZipFile
+from sys import argv
+import argparse
 import base64
 import json
-import sys
-import re
+import math
 import os
-from sys import argv
-from xml.etree.ElementTree import Element, SubElement, Comment, tostring
-from zipfile import ZipFile
+import re
+
+parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module")
+parser.add_argument('module_name', metavar='M', type=str, nargs=1, help="The name for the output module")
+parser.add_argument('files', metavar='F', type=str, nargs='+', help="The df2vtt files to parse into a module")
+parser.add_argument('-a', dest='author', default='DungeonFog', type=str, help="Specify the module author (Default: DungeonFog)")
+parser.add_argument('-w', dest='wall_width', default=10, type=int, help="Specify wall width (Default: 10)")
+
+args = parser.parse_args()
+
+enable_zero_occluder = True
 
 if argv.__len__() == 1:
 	print("No module name provided.")
@@ -18,8 +29,25 @@ elif argv[1] == "workdir":
 	print("Workdir: " + os.getcwd())
 	exit()
 
+global_grid_size = 50
+def pos_x(pos):
+	global global_grid_size
+	return pos * global_grid_size
+
+def pos_y(pos):
+	global global_grid_size
+	return -(pos * global_grid_size)
+
+def spos_x(pos):
+	return str(pos_x(pos))
+
+def spos_y(pos):
+	return str(pos_y(pos))
+
 image_id = 1
-def generate_image(fn, name, img_ext, grid_size, occluders = []):
+def generate_image(fn, name, img_ext, grid_size, img_occluders=None, img_offset_x = 0, img_offset_y = 0):
+	if img_occluders is None:
+		img_occluders = []
 	global image_id
 	img = Element("id-" + str(image_id).zfill(5))
 	SubElement(img, "locked", { "type": "number" }).text = "0"
@@ -29,7 +57,8 @@ def generate_image(fn, name, img_ext, grid_size, occluders = []):
 	SubElement(image, "gridsize").text = str(grid_size) + "," + str(grid_size)
 	SubElement(image, "gridoffset").text = "0,0"
 	SubElement(image, "gridsnap").text = "on"
-	SubElement(image, "color").text = "#00FFFFFF"
+	# SubElement(image, "color").text = "#00FFFFFF" # transparent
+	SubElement(image, "color").text = "#FF0F00AF" # blue visible
 	layers = SubElement(image, "layers")
 
 	layer = SubElement(layers, "layer")
@@ -37,31 +66,74 @@ def generate_image(fn, name, img_ext, grid_size, occluders = []):
 	SubElement(layer, "id").text = "0"
 	SubElement(layer, "type").text = "image"
 	SubElement(layer, "bitmap").text = fn
-	offset_x = 0
-	offset_y = 0
-	SubElement(layer, "matrix").text = "1,0,0,0,0,1,0,0,0,0,1,0," + str(offset_x) + "," + str(offset_y) + ",0,1"
+	SubElement(layer, "matrix").text = "1,0,0,0,0,1,0,0,0,0,1,0," + str(img_offset_x) + "," + str(img_offset_y) + ",0,1"
 
-	occluders = SubElement(layer, "occluders")
-	for occ in occluders:
-		occluders.append(generate_occluder("points here"))
+	img_xml_occluders = SubElement(layer, "occluders")
+	for occ in img_occluders:
+		img_xml_occluders.append(generate_simple_occluder(occ["points"], occ["type"]))
 
 	image_id += 1
 	return img
 
-occluder_id = 1
-def generate_occluder(points, toggleable = False, single_sided = False, closed = False):
+occluder_id = 0
+def generate_occluder(points, toggleable = False, single_sided = False, closed = True, allow_vision = False, counterclockwise = False):
 	global occluder_id
 	occluder = Element("occluder")
-	SubElement(occluder, "id").text = str(occluder_id).zfill(5)
+	SubElement(occluder, "id").text = str(occluder_id)
 	occluder_id += 1
-	SubElement(occluder, "points").text = "???"
+	SubElement(occluder, "points").text = points
 	if toggleable:
 		SubElement(occluder, "toggleable")
 		if closed:
 			SubElement(occluder, "closed")
 	if single_sided:
 		SubElement(occluder, "single_sided")
+	if allow_vision:
+		SubElement(occluder, "allow_vision")
+	if counterclockwise:
+		SubElement(occluder, "counterclockwise")
 	return occluder
+
+def generate_simple_occluder(points, occluder_type = None):
+	if occluder_type is None:
+		occluder_type = "wall"
+	if occluder_type == "door":
+		return generate_occluder(points, True, True, True, False, True)
+	elif occluder_type == "window":
+		return generate_occluder(points, True, False, True, True)
+	return generate_occluder(points)
+
+# From: https://stackoverflow.com/a/1937202
+# Answer by Andreas Brinck
+def expand_line(x0, y0, x1, y1, t):
+	"""
+	Returns an array of four coordinate sets expanding the input line into a rectangle with thickness t
+	:param x0:
+	:param y0:
+	:param x1:
+	:param y1:
+	:param t:
+	:return:
+	"""
+	dx = x1 - x0 #delta x
+	dy = y1 - y0 #delta y
+	line_length = math.sqrt(dx * dx + dy * dy)
+	dx /= line_length
+	dy /= line_length
+	#Ok, (dx, dy) is now a unit vector pointing in the direction of the line
+	#A perpendicular vector is given by (-dy, dx)
+	px = 0.5 * t * (-dy) #perpendicular vector with length thickness * 0.5
+	py = 0.5 * t * dx
+
+	x2 = x0 + px
+	y2 = y0 + py
+	x3 = x1 + px
+	y3 = y1 + py
+	x4 = x1 - px
+	y4 = y1 - py
+	x5 = x0 - px
+	y5 = y0 - py
+	return [{"x": x2, "y": y2}, {"x": x3, "y": y3},{"x": x4, "y": y4},{"x": x5, "y": y5}]
 
 to_zip = []
 used_image_names = []
@@ -81,33 +153,41 @@ for arg in argv:
 		print("Export file: " + arg)
 		with open(arg) as f:
 			json_str = f.read()
-		# try:
-			data = json.loads(json_str)
+		data = json.loads(json_str)
+		pixels_per_grid = data["resolution"]["pixels_per_grid"]
+		global_grid_size = pixels_per_grid
 
-			imgstring = data['image']
+		imgstring = data['image']
 
-			imgdata = base64.b64decode(imgstring)
-			exp = re.compile("(.*)(\..{2,6})")
-			match = exp.match(arg)
-			filename = match[1]
-			ext = match[2]
-			filename_counter = 0
-			while used_image_names.__contains__(filename + ext):
-				filename_counter += 1
-				filename += "_" + str(filename_counter)
-			used_image_names.append(filename + ext)
-			try:
-				os.mkdir("images")
-			except FileExistsError:
-				pass
-			with open("images/" + filename + ".png", 'wb') as f:
-				f.write(imgdata)
-			to_zip.append("images/" + filename + ".png")
+		imgdata = base64.b64decode(imgstring)
+		exp = re.compile("(.*)(\..{2,6})")
+		match = exp.match(arg)
+		filename = match[1]
+		ext = match[2]
+		filename_counter = 0
+		while used_image_names.__contains__(filename + ext):
+			filename_counter += 1
+			filename += "_" + str(filename_counter)
+		used_image_names.append(filename + ext)
+		try:
+			os.mkdir("images")
+		except FileExistsError:
+			pass
+		with open("images/" + filename + ".png", 'wb') as f:
+			f.write(imgdata)
+		to_zip.append("images/" + filename + ".png")
 
-			images.append(generate_image("images/" + filename + ".png", filename, ".png", data["resolution"]["pixels_per_grid"]))
-		# except:
-		# 	print("Unable to process file '" + arg + "'")
-		# 	print("Unexpected error:", sys.exc_info()[0])
+		occluders = []
+		for los in data["line_of_sight"]:
+			occluders.append({ "points": spos_x(los[0]["x"]) + "," + spos_y(los[0]["y"]) + "," + spos_x(los[1]["x"]) + "," + spos_y(los[1]["y"]), "type": "wall" })
+		if enable_zero_occluder:
+			occluders.append({ "points": "0,0,10,10", "type": "wall" })
+		for portal in data["portals"]:
+			eport = expand_line(pos_x(portal["bounds"][0]["x"]), pos_y(portal["bounds"][0]["y"]), pos_x(portal["bounds"][1]["x"]), pos_y(portal["bounds"][1]["y"]), args.wall_width)
+			occluders.append({ "points": str(eport[0]["x"]) + "," + str(eport[0]["y"]) + "," + str(eport[1]["x"]) + "," + str(eport[1]["y"]) + "," + str(eport[2]["x"]) + "," + str(eport[2]["y"]) + "," + str(eport[3]["x"]) + "," + str(eport[3]["y"]), "type": "door" })
+		offset_x = pos_x(data["resolution"]["map_size"]["x"]) / 2 #This is correct! Don't touch!
+		offset_y = pos_y((data["resolution"]["map_size"]["y"]) / 2)
+		images.append(generate_image("images/" + filename + ".png", filename, ".png", pixels_per_grid, occluders, offset_x, offset_y))
 
 	counter += 1
 
@@ -131,7 +211,7 @@ to_zip.append("client.xml")
 xml_definition_root = Element("root", xml_data_version)
 SubElement(xml_definition_root, "name").text = module_name
 SubElement(xml_definition_root, "category")
-SubElement(xml_definition_root, "author")
+SubElement(xml_definition_root, "author").text = args.author
 SubElement(xml_definition_root, "ruleset").text = "5E"
 
 with open("definition.xml", 'wb') as f:
