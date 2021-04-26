@@ -12,10 +12,10 @@ import math
 import os
 import re
 
-parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module")
-parser.add_argument('module_name', metavar='M', type=str, nargs="?", help="The name for the output module")
-parser.add_argument('files', metavar='F', type=str, nargs='+', help="The df2vtt files to parse into a module")
-parser.add_argument('-a', dest='author', default='DungeonFog', type=str, help="Specify the module author (Default: DungeonFog)")
+parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
+parser.add_argument('module_name', metavar='M', nargs="?", help="The name for the output module")
+parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module")
+parser.add_argument('-a', dest='author', default='DungeonFog', help="Specify the module author (Default: DungeonFog)")
 parser.add_argument('-w', dest='wall_width', default=10, type=int, nargs="?", help="Specify wall width (Default: 10)")
 
 args = parser.parse_args()
