@@ -1,3 +1,5 @@
+#!/usr/bin/env
+
 # Provide a desired module name as the first argument
 # Provide any number of Universal VTT json files as individual arguments after that
 # Each provided file will be included in the module as a map
@@ -17,9 +19,11 @@ parser.add_argument('module_name', metavar='M', nargs="?", help="The name for th
 parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module")
 parser.add_argument('-a', dest='author', default='DungeonFog', help="Specify the module author (Default: DungeonFog)")
 parser.add_argument('-w', dest='wall_width', default=10, type=int, nargs="?", help="Specify wall width (Default: 10)")
+parser.add_argument('-v', dest='verbose', action='store_true', help="Whether detailed debugging output should be provided.")
+parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file. (Default: mod)")
+parser.add_argument('-g', dest='grid_color', default='00000000', help="The grid color. (Default: 000F00AF)")
 
 args = parser.parse_args()
-print(args)
 
 enable_zero_occluder = True
 
@@ -60,8 +64,7 @@ def generate_image(fn, name, img_ext, grid_size, img_occluders=None, img_offset_
 	SubElement(image, "gridsize").text = str(grid_size) + "," + str(grid_size)
 	SubElement(image, "gridoffset").text = "0,0"
 	SubElement(image, "gridsnap").text = "on"
-	# SubElement(image, "color").text = "#00FFFFFF" # transparent
-	SubElement(image, "color").text = "#FF0F00AF" # blue visible
+	SubElement(image, "color").text = "#" + args.grid_color
 	layers = SubElement(image, "layers")
 
 	layer = SubElement(layers, "layer")
@@ -90,7 +93,7 @@ def generate_image(fn, name, img_ext, grid_size, img_occluders=None, img_offset_
 	return img
 
 occluder_id = 0
-def generate_occluder(points, toggleable = False, single_sided = False, closed = True, allow_vision = False, counterclockwise = False):
+def generate_occluder(points, toggleable = False, hidden = False, single_sided = False, terrain = False, allow_move = False, closed = True, allow_vision = False, counterclockwise = False, shadow = False, pit = False):
 	global occluder_id
 	occluder = Element("occluder")
 	SubElement(occluder, "id").text = str(occluder_id)
@@ -98,24 +101,44 @@ def generate_occluder(points, toggleable = False, single_sided = False, closed =
 	SubElement(occluder, "points").text = points
 	if toggleable:
 		SubElement(occluder, "toggleable")
-		if closed:
-			SubElement(occluder, "closed")
+	if closed:
+		SubElement(occluder, "closed")
 	if single_sided:
 		SubElement(occluder, "single_sided")
 	if allow_vision:
 		SubElement(occluder, "allow_vision")
 	if counterclockwise:
 		SubElement(occluder, "counterclockwise")
+	if hidden:
+		SubElement(occluder, "hidden")
+	if terrain:
+		SubElement(occluder, "terrain")
+	if shadow:
+		SubElement(occluder, "shadow")
+	if pit:
+		SubElement(occluder, "pit")
 	return occluder
 
 def generate_simple_occluder(points, occluder_type = None):
 	if occluder_type is None:
 		occluder_type = "wall"
-	if occluder_type == "door":
-		return generate_occluder(points, True, True, True, False, True)
+	if occluder_type == "wall":
+		return generate_occluder(points, closed=True)
+	elif occluder_type == "terrain":
+		return generate_occluder(points, toggleable=True, hidden=True, single_sided=True, terrain=True, allow_move=True, closed=True, counterclockwise=True)
+	elif occluder_type == "door":
+		return generate_occluder(points, toggleable=True, single_sided=True, closed=True, counterclockwise=True)
+	elif occluder_type == "toggleable_wall":
+		return generate_occluder(points, toggleable=True, hidden=True, closed=True)
 	elif occluder_type == "window":
-		return generate_occluder(points, True, False, True, True)
-	return generate_occluder(points)
+		return generate_occluder(points, toggleable=True, allow_vision=True, closed=True)
+	elif occluder_type == "illusory_wall":
+		return generate_occluder(points, allow_move=True, closed=True)
+	elif occluder_type == "pit":
+		return generate_occluder(points, toggleable=True, hidden=True, single_sided=True, pit=True, closed=True, counterclockwise=True)
+	elif occluder_type == "shadow_caster":
+		return generate_occluder(points, hidden=True, single_sided=True, allow_move=True, closed=True, counterclockwise=True, shadow=True)
+	return None
 
 light_id = 0
 def generate_light(light_position_x, light_position_y, bright_range, dim_range, color, on = True):
@@ -176,11 +199,12 @@ xml_client_root = Element("root", xml_data_version)
 images = SubElement(xml_client_root, "image")
 
 counter = 0
-for arg in args.files:
+for file in args.files:
 	json_str = None
 	data = None
-	print("Export file: " + arg)
-	with open(arg) as f:
+	if args.verbose:
+		print("Processing file: " + file)
+	with open(file) as f:
 		json_str = f.read()
 	data = json.loads(json_str)
 	pixels_per_grid = data["resolution"]["pixels_per_grid"]
@@ -190,9 +214,12 @@ for arg in args.files:
 
 	imgdata = base64.b64decode(imgstring)
 	exp = re.compile("(.*)(\..{2,6})")
-	match = exp.match(arg)
-	filename = match[1]
-	ext = match[2]
+	match = exp.match(file)
+	if args.verbose:
+		print(match.group(1))
+		print(match.group(2))
+	filename = match.group(1)
+	ext = match.group(2)
 	filename_counter = 0
 	while used_image_names.__contains__(filename + ext):
 		filename_counter += 1
@@ -252,7 +279,7 @@ with open("definition.xml", 'wb') as f:
 	f.write(bytes(xml_version, "utf8") + tostring(xml_definition_root))
 to_zip.append("definition.xml")
 
-zip_file = ZipFile(module_id + ".mod", "w")
+zip_file = ZipFile(module_id + "." + args.extension, "w")
 for f in to_zip:
 	zip_file.write(f)
 zip_file.close()
@@ -261,6 +288,9 @@ if counter > 0:
 	s = "s"
 	if counter == 1:
 		s = ""
-	print("Finished processing (" + str(counter) + " file" + s + ")")
+	if args.verbose:
+		print("Finished processing (" + str(counter) + " file" + s + ")")
+	print(module_id + "." + args.extension)
 else:
-	print("No files were processed!")
+	if args.verbose:
+		print("No files were processed!")
