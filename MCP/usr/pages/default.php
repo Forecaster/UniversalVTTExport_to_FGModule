@@ -51,7 +51,7 @@ class ModuleDefault extends BaseModule {
 		<p>You may also wish to do this locally on your own machine. This is possible by downloading the <a href="parser.py">Python script</a> used to generate the modules and running it locally.</p>
 		<p>Doing this requires that your system can run Python scripts and familiarity with the command line, or a desire to learn.</p>
 		<p>This page and the module generating script was created by Forecaster. If you need help you can find him on the <a href="https://dungeonfog.com/discord">DungeonFog Discord</a> server.</p>
-		<p>There is also a <a href="">GitHub repository</a> where you can find the code for this page as well as the Python script. There you can also report issues related to this project.</p>
+		<p>There is also a <a href="https://github.com/Forecaster/UniversalVTTExport_to_FGModule">GitHub repository</a> where you can find the code for this page as well as the Python script. There you can also report issues related to this project.</p>
 		<p>Note: The maximum filesize is 20 MB, and the total max size is 50 MB. If you want to handle files larger than this or with a larger total size you need to download the Python script and run it locally.</p>
 
 		<h3>Generate Module</h3>
