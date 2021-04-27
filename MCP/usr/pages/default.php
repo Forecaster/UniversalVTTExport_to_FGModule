@@ -11,6 +11,7 @@ class ModuleDefault extends BaseModule {
 	private static $form;
 	private static $path;
 	private static $file;
+	private static $cmd_output;
 	public static function Pre() {
 		self::$form = new Form();
 
@@ -33,10 +34,10 @@ class ModuleDefault extends BaseModule {
 				$auth = " -a \"" . $author->GetValue() . "\"";
 			chdir($dir_path);
 			$cmd = escapeshellcmd("python3 " . __DIR__ . "/../../parser.py -v $auth \"$module_name\" \"" . implode("\" \"", $file_list) . "\"");
-			$cmd_output = shell_exec($cmd);
-			if (stristr($cmd_output, "Finished processing ") !== false) {
+			self::$cmd_output = shell_exec($cmd);
+			if (stristr(self::$cmd_output, "Finished processing ") !== false) {
 				self::$path = "usr/sessions/" . $session_id . "/";
-				self::$file = array_reverse(explode("\n", $cmd_output))[1];
+				self::$file = array_reverse(explode("\n", self::$cmd_output))[1];
 			} else {
 				self::$file = false;
 			}
@@ -61,13 +62,23 @@ class ModuleDefault extends BaseModule {
 			echo self::$form->BuildForm();
 		elseif (self::$file === false) {
 			?>
-			<div>Unable to generate module! <a href=".">Try again!</a> If the issue persist please report this!</div>
+			<p>Unable to generate module! <a href=".">Try again!</a></p>
+			<p>If the issue persist please report this! Check the parser output below and include it in the report!</p>
+			<h3>Parser output:</h3>
+			<code>
+				<?= nl2br(self::$cmd_output) ?>
+			</code>
 			<?
 		} else {
 			?>
 			<p>Success: <a href='<?= self::$path . self::$file ?>'>Download</a></p>
 			<p>This download will remain available for at least an hour, <span class="txt_error">unless you create a module with the same name</span>, in which case the previous module will be overwritten.</p>
-			<p><a href=".">Generate another module</a></p>
+			<p><a href=".">Generate another module</a>
+
+			<h3>Parser output:</h3>
+				<code>
+					<?= nl2br(self::$cmd_output) ?>
+				</code>
 			<?
 		}
 	}
