@@ -5,7 +5,7 @@ Capabilities::load(array(Capabilities::$FORM, Capabilities::$KRUMO));
 
 class ModuleDefault extends BaseModule {
 	public static function GetTitle($page_title = "") {
-		return parent::GetTitle("Default Page");
+		return parent::GetTitle();
 	}
 
 	private static $form;
