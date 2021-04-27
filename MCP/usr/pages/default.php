@@ -1,6 +1,5 @@
 <?
 require_once __DIR__ . "/../../internal/BaseModule.php";
-require_once __DIR__ . "/../../internal/Capabilities.php";
 Capabilities::load(array(Capabilities::$FORM, Capabilities::$KRUMO));
 
 class ModuleDefault extends BaseModule {
