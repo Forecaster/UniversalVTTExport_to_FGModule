@@ -7,6 +7,7 @@ $menu = new MenuStructure();
 
 $menu->AddItem(new MenuLink("Home", $menu_root));
 $menu->AddItem(new MenuLink("GitHub", "https://github.com/Forecaster/UniversalVTTExport_to_FGModule"));
-$menu->AddItem(new MenuLink("Discord", "https://dungeonfog.com/discord"));
+$menu->AddItem(new MenuLink("DungeonFog", "https://dungeonfog.com"));
+$menu->AddItem(new MenuLink("DF Discord", "https://dungeonfog.com/discord"));
 
 return $menu;
