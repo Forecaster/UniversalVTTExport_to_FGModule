@@ -14,6 +14,8 @@ import math
 import os
 import re
 
+version = "v1.0"
+
 parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
 parser.add_argument('module_name', metavar='M', nargs="?", help="The name for the output module")
 parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module")
@@ -22,6 +24,7 @@ parser.add_argument('-w', dest='wall_width', default=10, type=int, nargs="?", he
 parser.add_argument('-v', dest='verbose', action='store_true', help="Whether detailed debugging output should be provided.")
 parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file. (Default: mod)")
 parser.add_argument('-g', dest='grid_color', default='00000000', help="The grid color. (Default: 000F00AF)")
+parser.add_argument('--version', action='version', version='%(prog)s ' + version)
 
 args = parser.parse_args()
 
