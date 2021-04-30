@@ -14,6 +14,7 @@ import math
 import os
 import re
 
+name = "DungeonFog FG Module Generator"
 version = "v1.0"
 
 parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
@@ -24,7 +25,7 @@ parser.add_argument('-d', dest='door_width', default=10, type=int, nargs="?", he
 parser.add_argument('-v', dest='verbose', action='store_true', help="Whether detailed debugging output should be provided.")
 parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file. (Default: mod)")
 parser.add_argument('-g', dest='grid_color', default='00000000', help="The grid color. (Default: 000F00AF)")
-parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+parser.add_argument('--version', action='version', version=name + ' ' + version)
 
 args = parser.parse_args()
 
