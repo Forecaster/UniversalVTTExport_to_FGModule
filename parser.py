@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description="Converts one or more df2vtt files 
 parser.add_argument('module_name', metavar='M', nargs="?", help="The name for the output module")
 parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module")
 parser.add_argument('-a', dest='author', default='DungeonFog', help="Specify the module author (Default: DungeonFog)")
-parser.add_argument('-w', dest='wall_width', default=10, type=int, nargs="?", help="Specify wall width (Default: 10)")
+parser.add_argument('-d', dest='door_width', default=10, type=int, nargs="?", help="Specify door width (Default: 10)")
 parser.add_argument('-v', dest='verbose', action='store_true', help="Whether detailed debugging output should be provided.")
 parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file. (Default: mod)")
 parser.add_argument('-g', dest='grid_color', default='00000000', help="The grid color. (Default: 000F00AF)")
@@ -242,7 +242,7 @@ for file in args.files:
 	if enable_zero_occluder:
 		occluders.append({ "points": "0,0,10,10", "type": "wall" })
 	for portal in data["portals"]:
-		eport = expand_line(pos_x(portal["bounds"][0]["x"]), pos_y(portal["bounds"][0]["y"]), pos_x(portal["bounds"][1]["x"]), pos_y(portal["bounds"][1]["y"]), args.wall_width)
+		eport = expand_line(pos_x(portal["bounds"][0]["x"]), pos_y(portal["bounds"][0]["y"]), pos_x(portal["bounds"][1]["x"]), pos_y(portal["bounds"][1]["y"]), args.door_width)
 		occluders.append({ "points": str(eport[0]["x"]) + "," + str(eport[0]["y"]) + "," + str(eport[1]["x"]) + "," + str(eport[1]["y"]) + "," + str(eport[2]["x"]) + "," + str(eport[2]["y"]) + "," + str(eport[3]["x"]) + "," + str(eport[3]["y"]), "type": "door" })
 
 	lights = []
