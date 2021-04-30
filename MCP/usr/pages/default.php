@@ -80,7 +80,7 @@ class ModuleDefault extends BaseModule {
 			<li>Toggle-able doors & windows</li>
 		</ul>
 		<?
-		$what = new CollapsibleSection("What does this do?", "<p>This generator takes one or more <code>.df2vtt</code> files exported from <a href='https://dungeonfog.com'>DungeonFog</a> and turns them into a module file for Fantasy Grounds.</p><p>This module can then be added to the <code>Modules</code> directory in a Fantasy Grounds and loaded within a campaign to access it's contents.</p>", "h3");
+		$what = new CollapsibleSection("What does this do?", "<p>This generator takes one or more <code>.df2vtt</code> files exported from <a href='https://dungeonfog.com'>DungeonFog</a> and turns them into a module file for Fantasy Grounds.</p><p>This module can then be added to the <code>Modules</code> directory in Fantasy Grounds and loaded within a campaign to access it's contents.</p>", "h3");
 		$what();
 		$how = new CollapsibleSection("How does it do it?", "<p>This page accepts some user input, which includes the <code>.df2vtt</code> files, from the form below and passes it to a parser script that outputs a module file which is then available to download via a link.</p><p>The parser script is written in Python and is made to be usable on its own! See further down!</p>", "h3");
 		$how();
