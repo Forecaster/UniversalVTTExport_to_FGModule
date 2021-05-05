@@ -127,5 +127,6 @@ class ModuleDefault extends BaseModule {
 			<change>Initial release</change>
 		</div>
 		<?
+		echo require_once __DIR__ . "/stats.php";
 	}
 }
