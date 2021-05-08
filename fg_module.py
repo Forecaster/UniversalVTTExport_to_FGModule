@@ -28,7 +28,11 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 
 	img_xml_occluders = SubElement(layer, "occluders")
 	for occ in img_occluders:
-		img_xml_occluders.append(generate_simple_occluder(occ["points"], occ["type"]))
+		occluder = generate_simple_occluder(occ["points"], occ["type"])
+		if occluder is None:
+			print("Type '" + occ["type"] + "' is not a valid simple occluder type.")
+		else:
+			img_xml_occluders.append(occluder)
 
 	if img_lights.__len__() > 0:
 		img_xml_lights_layer = SubElement(layers, "layer")
@@ -45,11 +49,13 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 	return img
 
 occluder_id = 0
-def generate_occluder(points, toggleable = False, hidden = False, single_sided = False, terrain = False, allow_move = False, closed = True, allow_vision = False, counterclockwise = False, shadow = False, pit = False):
+def generate_occluder(points, override_id = None, toggleable = False, hidden = False, single_sided = False, terrain = False, allow_move = False, closed = True, allow_vision = False, counterclockwise = False, shadow = False, pit = False):
 	global occluder_id
+	if override_id is None:
+		override_id = occluder_id
+		occluder_id += 1
 	occluder = Element("occluder")
-	SubElement(occluder, "id").text = str(occluder_id)
-	occluder_id += 1
+	SubElement(occluder, "id").text = str(override_id)
 	SubElement(occluder, "points").text = points
 	if toggleable:
 		SubElement(occluder, "toggleable")
@@ -73,25 +79,45 @@ def generate_occluder(points, toggleable = False, hidden = False, single_sided =
 		SubElement(occluder, "allow_move")
 	return occluder
 
-def generate_simple_occluder(points, occluder_type = None):
+def generate_simple_occluder(points, occluder_type = None, override_id = None):
+	global occluder_id
+	if override_id is None:
+		override_id = occluder_id
+		occluder_id += 1
+	occluder = Element("occluder")
+	SubElement(occluder, "id").text = str(override_id)
+	SubElement(occluder, "points").text = points
 	if occluder_type is None:
 		occluder_type = "wall"
+	occluder_type = occluder_type.lower()
 	if occluder_type == "wall":
-		return generate_occluder(points, closed=True)
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
 	elif occluder_type == "terrain":
-		return generate_occluder(points, toggleable=True, hidden=True, single_sided=True, terrain=True, allow_move=True, closed=True, counterclockwise=True)
+		SubElement(occluder, "terrain").text = "true"
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
 	elif occluder_type == "door":
-		return generate_occluder(points, toggleable=True, single_sided=True, closed=True, counterclockwise=True)
+		SubElement(occluder, "door").text = "true"
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
 	elif occluder_type == "toggleable_wall":
-		return generate_occluder(points, toggleable=True, hidden=True, closed=True)
+		SubElement(occluder, "secret").text = "true"
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
 	elif occluder_type == "window":
-		return generate_occluder(points, toggleable=True, allow_vision=True, closed=True)
+		SubElement(occluder, "window").text = "true"
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
 	elif occluder_type == "illusory_wall":
-		return generate_occluder(points, allow_move=True, closed=True)
+		SubElement(occluder, "illusion").text = "true"
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
 	elif occluder_type == "pit":
-		return generate_occluder(points, toggleable=True, hidden=True, single_sided=True, pit=True, closed=True, counterclockwise=True)
-	elif occluder_type == "shadow_caster":
-		return generate_occluder(points, hidden=True, single_sided=True, allow_move=True, closed=True, counterclockwise=True, shadow=True)
+		SubElement(occluder, "pit").text = "true"
+		SubElement(occluder, "closedpolygon").text = "true"
+		return occluder
+	print("Unsupported occluder '" + occluder_type + "'")
 	return None
 
 light_id = 0
