@@ -156,7 +156,7 @@ name = "DungeonFog FG Module Generator"
 version = "v1.1"
 
 parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
-parser.add_argument('module_name', metavar='M', nargs="?", help="The name for the output module")
+parser.add_argument('module_name', metavar='M', nargs=1, help="The name for the output module")
 parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module")
 parser.add_argument('-a', dest='author', default='DungeonFog', help="Specify the module author (Default: DungeonFog)")
 parser.add_argument('-d', dest='door_width', default=10, type=int, nargs="?", help="Specify door width (Default: 10)")
@@ -227,7 +227,7 @@ def expand_line(x0, y0, x1, y1, t):
 
 to_zip = []
 used_image_names = []
-module_name = args.module_name
+module_name = args.module_name[0]
 module_id = module_name.replace(" ", "_").lower()
 
 xml_version = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
