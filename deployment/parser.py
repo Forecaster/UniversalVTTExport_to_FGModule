@@ -156,12 +156,12 @@ name = "DungeonFog FG Module Generator"
 version = "v1.1"
 
 parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
-parser.add_argument('module_name', metavar='M', nargs=1, help="The name for the output module")
-parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module")
-parser.add_argument('-a', dest='author', default='DungeonFog', help="Specify the module author (Default: DungeonFog)")
-parser.add_argument('-d', dest='door_width', default=10, type=int, nargs="?", help="Specify door width (Default: 10)")
+parser.add_argument('module_name', metavar='M', nargs=1, help="The module name as shown within Fantasy Grounds. Also used as the filename.")
+parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module.")
+parser.add_argument('-a', dest='author', default='DungeonFog', help="Set a custom module author. (Default: DungeonFog)")
+parser.add_argument('-d', dest='door_width', default=10, type=int, nargs=1, help="Specify door width. (Default: 10)")
 parser.add_argument('-v', dest='verbose', action='store_true', help="Whether detailed debugging output should be provided.")
-parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file. (Default: mod)")
+parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file (eg. zip). (Default: mod)")
 parser.add_argument('-g', dest='grid_color', default='00000000', help="The grid color. (Default: 00000000)")
 parser.add_argument('--version', action='version', version=name + ' ' + version)
 parser.add_argument('-p', dest='refine_portals', action='store_true', help="Whether to refine portals (doors) and define types. Requires the Pillow module to be installed.")
