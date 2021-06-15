@@ -32,7 +32,7 @@ class ModuleDefault extends BaseModule {
 			if (!empty($author->GetValue()))
 				$auth = " -a \"" . $author->GetValue() . "\"";
 			chdir($dir_path);
-			$cmd = escapeshellcmd("python3 " . __DIR__ . "/../../parser.py -v $auth \"$module_name\" \"" . implode("\" \"", $file_list) . "\"");
+			$cmd = escapeshellcmd("python3 " . __DIR__ . "/../../parser.py -vc $auth \"$module_name\" \"" . implode("\" \"", $file_list) . "\"");
 			self::$cmd_output = shell_exec($cmd);
 			if (stristr(self::$cmd_output, "Finished processing ") !== false) {
 				self::$path = "usr/sessions/" . $session_id . "/";
