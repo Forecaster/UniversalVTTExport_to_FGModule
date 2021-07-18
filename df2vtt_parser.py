@@ -17,6 +17,9 @@ import re
 import fg_module
 import utilib
 
+name = "DungeonFog FG Module Generator"
+version = "v1.2"
+
 verbose = False
 log_file = False
 def vprint(msg):
@@ -535,11 +538,8 @@ def main(module_name, files, options = {}):
 		vprint("Skipped cleanup due to arguments")
 	print(module_id + "." + options['extension'])
 
-name = "DungeonFog FG Module Generator"
-version = "v1.2"
-
 def get_argparse():
-	parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
+	parser = argparse.ArgumentParser(description=name + " " + version + " - Converts one or more df2vtt files into a Fantasy Grounds module.")
 	parser.add_argument('module_name', metavar='M', type=str, help="The module name as shown within Fantasy Grounds. Also used as the filename.")
 	parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module.")
 	parser.add_argument('-a', dest='author', default='DungeonFog', help="Set a custom module author. (Default: DungeonFog)")
@@ -570,6 +570,9 @@ def do_args(arg_list):
 
 	verbose = args.verbose
 	log_file = args.log_to_file
+
+	print("Application starting")
+	print(name + " " + version)
 
 	options = {
 		"refine_portals": args.refine_portals,

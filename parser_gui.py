@@ -11,6 +11,8 @@ import os
 import re
 import webbrowser
 
+print(parser.name + " " + parser.version)
+
 if len(sys.argv) > 1:
 	print("Arguments present. Running in command line mode. (Run without arguments to run in GUI mode.)")
 	parser.do_args(sys.argv)
@@ -145,7 +147,7 @@ layout_about = [
 ]
 
 # Create the Window
-window = gui.Window('DungeonFog to Fantasy Grounds Module Generator', layout, finalize=True)
+window = gui.Window(parser.name + " " + parser.version, layout, finalize=True)
 window["link_about"].set_cursor("hand2")
 
 win_about = None
