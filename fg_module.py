@@ -1,6 +1,10 @@
 
 from xml.etree.ElementTree import Element, SubElement, tostring
 
+import shapely.geometry
+
+import utilib
+
 image_id = 1
 def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None, img_offset_x = 0, img_offset_y = 0, img_lights = None):
 	if img_occluders is None:
@@ -8,7 +12,9 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 	if img_lights is None:
 		img_lights = []
 	global image_id
+	layer_id = 0
 	img = Element("id-" + str(image_id).zfill(5))
+	SubElement(img, "uselighting").text = "on"
 	SubElement(img, "locked", { "type": "number" }).text = "0"
 	SubElement(img, "name", { "type": "string" }).text = name
 	image = SubElement(img, "image", { "type": "image" })
@@ -21,10 +27,64 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 
 	layer = SubElement(layers, "layer")
 	SubElement(layer, "name").text = name + img_ext
-	SubElement(layer, "id").text = "0"
+	SubElement(layer, "id").text = str(layer_id)
+	layer_id += 1
 	SubElement(layer, "type").text = "image"
 	SubElement(layer, "bitmap").text = fn
 	SubElement(layer, "matrix").text = "1,0,0,0,0,1,0,0,0,0,1,0," + str(img_offset_x) + "," + str(img_offset_y) + ",0,1"
+
+	if img_lights.__len__() > 0:
+		# img_xml_lights_layer = SubElement(layers, "layer")
+		# SubElement(img_xml_lights_layer, "name").text = "Lights"
+		# SubElement(img_xml_lights_layer, "id").text = str(layer_id)
+		# layer_id += 1
+		# SubElement(img_xml_lights_layer, "parentid").text = "-3"
+		# SubElement(img_xml_lights_layer, "type").text = "image"
+		# SubElement(img_xml_lights_layer, "bitmap")
+		# img_xml_lights = SubElement(img_xml_lights_layer, "lights")
+		img_xml_lights = SubElement(layer, "lights")
+		for this_light in img_lights:
+			img_xml_lights.append(generate_light(this_light["x"], this_light["y"], color=this_light["color"], range_pixels_bright=this_light["range_pixels"], range_pixels_dim=this_light["range_pixels"]*2, range_tiles_bright=this_light["range_tiles"], range_tiles_dim=this_light["range_tiles"]*2))
+
+	# Intersection scan
+	wall_counter = 0
+	intersection_counter = 0
+	# print("Start intersect scan..")
+	for a in range(len(img_occluders)):
+		occA = img_occluders[a]
+		if occA["type"] == "wall":
+			wall_counter += 1
+			for b in range(a + 1, len(img_occluders)):
+				occB = img_occluders[b]
+				if occB["type"] == "wall":
+					# print("a" + str(a) + " vs " + "b" + str(b))
+					pointsA = occA["points"].split(",")
+					pointsB = occB["points"].split(",")
+					lineA = ((float(pointsA[0]), float(pointsA[1])), (float(pointsA[2]), float(pointsA[3])))
+					lineB = ((float(pointsB[0]), float(pointsB[1])), (float(pointsB[2]), float(pointsB[3])))
+					intersect = utilib.intersects(lineA, lineB)
+					# print(intersect)
+					if intersect:
+						# print("a" + str(a), occA)
+						# print("b" + str(b), occB)
+						inters = utilib.get_intersect_point(lineA, lineB)
+						# print(str(inters) + " is close to lineA1", utilib.points_close(lineA[0], inters))
+						# print(str(inters) + " is close to lineA2", utilib.points_close(lineA[1], inters))
+						# print(str(inters) + " is close to lineB1", utilib.points_close(lineB[0], inters))
+						# print(str(inters) + " is close to lineB2", utilib.points_close(lineB[1], inters))
+						if utilib.true_intersect_check(lineA, lineB, inters):
+							intersection_counter += 1
+							new_occ_a = { "points": str(lineA[0][0]) + "," + str(lineA[0][1]) + "," + str(inters[0]) + "," + str(inters[1]) + "," + str(lineA[1][0]) + "," + str(lineA[1][1]), "type": "wall" }
+							new_occ_b = { "points": str(lineB[0][0]) + "," + str(lineB[0][1]) + "," + str(inters[0]) + "," + str(inters[1]) + "," + str(lineB[1][0]) + "," + str(lineB[1][1]), "type": "wall" }
+							# print(new_occ_a)
+							# print(new_occ_b)
+							img_occluders[a] = new_occ_a
+							img_occluders[b] = new_occ_b
+
+	inter_s = "s"
+	if intersection_counter == 1:
+		inter_s = ""
+	print("Intersection scan complete on " + str(wall_counter) + " walls. " + str(intersection_counter) + " intersection" + inter_s + " found.")
 
 	img_xml_occluders = SubElement(layer, "occluders")
 	for occ in img_occluders:
@@ -33,17 +93,6 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 			print("Type '" + occ["type"] + "' is not a valid simple occluder type.")
 		else:
 			img_xml_occluders.append(occluder)
-
-	if img_lights.__len__() > 0:
-		img_xml_lights_layer = SubElement(layers, "layer")
-		SubElement(img_xml_lights_layer, "name").text = "Lights"
-		SubElement(img_xml_lights_layer, "id").text = "1"
-		SubElement(img_xml_lights_layer, "parentid").text = "-3"
-		SubElement(img_xml_lights_layer, "type").text = "image"
-		SubElement(img_xml_lights_layer, "bitmap")
-		img_xml_lights = SubElement(img_xml_lights_layer, "lights")
-		for this_light in img_lights:
-			img_xml_lights.append(generate_light(this_light["x"], this_light["y"], this_light["range"], this_light["range"]/2, this_light["color"]))
 
 	image_id += 1
 	return img
@@ -80,58 +129,61 @@ def generate_occluder(points, override_id = None, toggleable = False, hidden = F
 	return occluder
 
 def generate_simple_occluder(points, occluder_type = None, override_id = None):
-	global occluder_id
-	if override_id is None:
-		override_id = occluder_id
-		occluder_id += 1
-	occluder = Element("occluder")
-	SubElement(occluder, "id").text = str(override_id)
-	SubElement(occluder, "points").text = points
 	if occluder_type is None:
 		occluder_type = "wall"
 	occluder_type = occluder_type.lower()
 	if occluder_type == "wall":
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
+		return generate_occluder(points, override_id = override_id, closed=True)
 	elif occluder_type == "terrain":
-		SubElement(occluder, "terrain").text = "true"
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
+		return generate_occluder(points, override_id = override_id, toggleable=True, hidden=True, single_sided=True, terrain=True, allow_move=True, closed=True, counterclockwise=True)
 	elif occluder_type == "door":
-		SubElement(occluder, "door").text = "true"
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
+		return generate_occluder(points, override_id = override_id, toggleable=True, single_sided=True, closed=True, counterclockwise=True)
 	elif occluder_type == "toggleable_wall":
-		SubElement(occluder, "secret").text = "true"
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
+		return generate_occluder(points, override_id = override_id, toggleable=True, hidden=True, closed=False)
 	elif occluder_type == "window":
-		SubElement(occluder, "window").text = "true"
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
+		return generate_occluder(points, override_id = override_id, toggleable=True, allow_vision=True, closed=True)
 	elif occluder_type == "illusory_wall":
-		SubElement(occluder, "illusion").text = "true"
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
+		return generate_occluder(points, override_id = override_id, allow_move=True, closed=True)
 	elif occluder_type == "pit":
-		SubElement(occluder, "pit").text = "true"
-		SubElement(occluder, "closedpolygon").text = "true"
-		return occluder
-	print("Unsupported occluder '" + occluder_type + "'")
+		return generate_occluder(points, override_id = override_id, toggleable=True, hidden=True, single_sided=True, pit=True, closed=True, counterclockwise=True)
+	elif occluder_type == "shadow_caster":
+		return generate_occluder(points, override_id = override_id, hidden=True, single_sided=True, allow_move=True, closed=True, counterclockwise=True, shadow=True)
 	return None
 
 light_id = 0
-def generate_light(light_position_x, light_position_y, bright_range, dim_range, color, on = True):
+def generate_light(light_position_x, light_position_y, range_pixels_bright, range_pixels_dim, range_tiles_bright, range_tiles_dim, color, on = True, falloff_bright = 0.75, falloff_dim = 0.5):
 	global light_id
 	xml_light = Element("light")
 	SubElement(xml_light, "id").text = str(light_id)
 	SubElement(xml_light, "position").text = str(light_position_x) + "," + str(light_position_y)
-	SubElement(xml_light, "range").text = str(dim_range) + ",0.75," + str(bright_range) + ",0.5"
-	SubElement(xml_light, "color").text = color
-	light_los = SubElement(xml_light, "los")
-	SubElement(light_los, "points").text = "306.7,-525,112.1,-525,105.2,-524.4,4.2,-497.3,-90.6,-453.1,-176.3,-393.1,-250.3,-319.2,-310.3,-233.5,-354.5,-138.7,-381.5,-37.7,-385.4,7.2,-104.4,35.1,-104.4,157.6,-364.8,233.2,-354.5,271.7,-310.3,366.5,-298.3,383.6,-104.4,262.5,-104.4,385.2,-210.1,492.4,-177.4,525,596.1,525,669,452.2,729,366.5,773.2,271.7,800.2,170.7,809.4,66.5,800.2,-37.7,773.2,-138.7,729,-233.5,669,-319.2,595,-393.1,509.4,-453.1,414.6,-497.3,313.6,-524.4"
+	SubElement(xml_light, "range").text = str(range_tiles_bright) + "," + str(falloff_bright) + "," + str(range_tiles_dim) + "," + str(falloff_dim)
+	SubElement(xml_light, "color").text = "#" + color
+	# light_los = SubElement(xml_light, "los")
+	# points = []
+	# for p in generate_light_radius_points(light_position_x, light_position_y, range_pixels_bright):
+	# 	points.append(str(p[0]))
+	# 	points.append(str(p[1]))
+	# SubElement(light_los, "points").text = ",".join(points)
 	if on:
 		SubElement(xml_light, "on")
 
 	light_id += 1
 	return xml_light
+
+def generate_light_radius_points(light_pos_x, light_pos_y, light_range):
+	origin = shapely.geometry.Point(light_pos_x, light_pos_y)
+	circle = origin.buffer(light_range)
+	return circle.exterior.coords
+
+def generate_ambient(color, shadow_color="#FF668096", direction=0.7826707, shadow_length=0.5458138, mask=False):
+	xml_ambient = Element("ambient")
+	SubElement(xml_ambient, "ambientcolor").text = color
+	SubElement(xml_ambient, "shadowcolor").text = shadow_color
+	SubElement(xml_ambient, "lightdir").text = str(direction)
+	SubElement(xml_ambient, "shadowlength").text = str(shadow_length)
+	if mask:
+		SubElement(xml_ambient, "useambientmask")
+		ambient_mask = SubElement(xml_ambient, "ambientmask")
+		for points in mask:
+			SubElement(ambient_mask, "points").text = points
+	return xml_ambient

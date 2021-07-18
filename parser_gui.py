@@ -9,9 +9,10 @@ from io import StringIO
 import sys
 import os
 import re
+import webbrowser
 
 if len(sys.argv) > 1:
-	print("Arguments present. Running in command line mode.")
+	print("Arguments present. Running in command line mode. (Run without arguments to run in GUI mode.)")
 	parser.do_args(sys.argv)
 	exit(0)
 else:
@@ -35,17 +36,25 @@ def query_input(query):
 		window_query = gui.Window("Query", [
 			[gui.Text("A total of " + str(amt) + " portals were found!")],
 			[gui.ProgressBar(amt - 1, orientation='h', size=(20, 20), key='pbar')],
+			[gui.Text("Open the image generated in the application directory that ends with '_portals.png'.")],
+			[gui.Text("Each portal has been assigned a number placed next to each in the image.")],
+			[gui.Text("Assign each portal a type below.")],
 			[gui.Text("")],
 			[gui.Text("Choose type for portal #" + str(query_counter), key="str_portal")],
-			[gui.DropDown(["Door", "Window", "Toggleable wall", "Illusory wall"], key="ddl_portal")],
-			[gui.Button("Previous", key="btn_prev", disabled=True), gui.Button("Next", key="btn_next"), gui.Button("Done", key="btn_done", visible=False)]
+			[gui.DropDown(["door", "window", "passage", "toggleable_wall", "illusory_wall"], key="ddl_portal")],
+			[gui.Button("Previous", key="btn_prev", disabled=True), gui.Button("Next", key="btn_next"), gui.Button("Done", key="btn_done", visible=False)],
+			[gui.Text("")],
+			[gui.Text("Types:")],
+			[gui.Text("Door - Blocks path & LOS when closed")],
+			[gui.Text("Window - Blocks path when closed, never blocks LOS")],
+			[gui.Text("Passage - Leaves gap in wall")],
+			[gui.Text("Toggleable wall - Like a door, but flush with the wall")],
+			[gui.Text("Illusory wall - Blocks LOS, never blocks path, cannot be toggled")]
 		])
 		window_query.finalize()
 		portals = ["portallist"]
 		while True:
 			event, values = window_query.read()
-			print(event)
-			print(values)
 			if event == gui.WIN_CLOSED or event == "btn_done":
 				try:
 					portals[query_counter] = values["ddl_portal"]
@@ -87,30 +96,104 @@ def query_input(query):
 		display_str = ""
 		return ";".join(portals)
 
+
+default_module = "MyModule"
+default_author = "DungeonFog"
+default_path = ""
+default_portal_width = "10"
+default_grid_color = "00000000"
+default_portal_refinement = False
+default_disable_cleanup = False
+default_ignore_lights = False
+default_disable_portal_fix = False
+
 pvalue = 1
 gui.theme('DarkAmber')   # Add a touch of color
 # All the stuff inside your window.
 layout = [
 	[gui.Text("Module Name - The name displayed in Fantasy Grounds")],
-	[gui.InputText("MyModule", focus=True)],
+	[gui.InputText(default_module, key="module_name", focus=True)],
 	[gui.Text("Author - The author displayed in Fantasy Grounds")],
-	[gui.InputText("DungeonFog")],
-	[gui.Text("Choose at least one df2vtt file")],
-	[gui.InputText("E:/Core - Development/Web/UniversalVTTExport_to_FGModule/workdir/Ground.df2vtt"), gui.FilesBrowse(file_types=(("Universal VTT", "*.df2vtt"),), initial_folder=os.getcwd())],
+	[gui.InputText(default_author, key="author_name")],
+	[gui.Text("Choose at least one df2vtt file. Multiple paths are separated with ; (Semicolon).")],
+	[gui.InputText(default_path, key="files"), gui.FilesBrowse(file_types=(("Universal VTT", "*.df2vtt"),), initial_folder=os.getcwd())],
 	[gui.Button("More options")],
 	[gui.Column([
-		[gui.Text("Door width"), gui.InputText("10", (10, 10)), gui.Text("pixels deep")],
-		[gui.Text("Grid color"), gui.InputText("00000000", (10, 0))],
-		[gui.Checkbox("Portal refinement")]], key="more_options", visible=more_options_visible)],
-	[gui.Button('Generate')]
+		[gui.Text("Portal width", tooltip="Defines the thickness of portals (doors, windows, etc)."), gui.InputText(default_portal_width, (10, 10), key="portal_width"), gui.Text("pixels deep")],
+		[gui.Text("Grid color", tooltip="A hex color code where the first number is alpha. Default is 0% opacity black grid."), gui.InputText(default_grid_color, (10, 0), key="grid_color")],
+		[gui.Checkbox("Portal refinement", default=default_portal_refinement, tooltip="Enabled portal refinement step. By default all portals (doors, windows, etc) are defined as doors.", key="portal_refinement")],
+		[gui.Checkbox("Disable cleanup", default=default_disable_cleanup, tooltip="Disabled cleanup of generated files after assembling module file.", key="disable_cleanup")],
+		[gui.Checkbox("Ignore lights", default=default_ignore_lights, tooltip="By default lights are processed and included. This causes lights to be excluded in the module.", key="ignore_lights")],
+		[gui.Checkbox("Disable portal fix", default=default_disable_portal_fix, tooltip="Disabled the fix for concealed doors not removing walls.", key="disable_portal_fix")]
+	], key="more_options", visible=more_options_visible)],
+	[gui.Button('Generate')],
+	[gui.Text("About", key="link_about", enable_events=True)],
+]
+
+layout_about = [
+	[gui.Text("This program was made by Forecaster and generates Fantasy")],
+	[gui.Text("Grounds Unity modules from maps exported from DungeonFog")],
+	[gui.Text("using the Universal VTT format.")],
+	[gui.Text("")],
+	[gui.Text("Written in Python and packaged into an executable using PyInstaller.")],
+	[gui.Text("")],
+	[gui.Text("Links:")],
+	[gui.Text("Website", enable_events=True, key="link_website")],
+	[gui.Text("GitHub", enable_events=True, key="link_github")],
+	[gui.Text("DungeonFog", enable_events=True, key="link_dungeonfog")],
+	[gui.Text("FantasyGrounds", enable_events=True, key="link_fantasygrounds")],
 ]
 
 # Create the Window
-window = gui.Window('DungeonFog to Fantasy Grounds Module Generator', layout)
+window = gui.Window('DungeonFog to Fantasy Grounds Module Generator', layout, finalize=True)
+window["link_about"].set_cursor("hand2")
+
+win_about = None
 
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
 	event, values = window.read()
+	module_name = default_module
+	author_name = default_author
+	path = default_path
+	portal_width = default_portal_width
+	grid_color = default_grid_color
+	portal_refinement = default_portal_refinement
+	disable_cleanup = default_disable_cleanup
+	ignore_lights = default_ignore_lights
+	try:
+		module_name = values["module_name"]
+	except:
+		pass
+	try:
+		author_name = values["author_name"]
+	except:
+		pass
+	try:
+		path = values["files"]
+	except:
+		pass
+	try:
+		portal_width = values["portal_width"]
+	except:
+		pass
+	try:
+		grid_color = values["grid_color"]
+	except:
+		pass
+	try:
+		portal_refinement = values["portal_refinement"]
+	except:
+		pass
+	try:
+		disable_cleanup = values["disable_cleanup"]
+	except:
+		pass
+	try:
+		ignore_lights = values["ignore_lights"]
+	except:
+		pass
+
 	if event == gui.WIN_CLOSED: # if user closes window
 		if window_query is not None:
 			window_query.close()
@@ -121,24 +204,49 @@ while True:
 	elif event == "Generate":
 		files = []
 		try:
-			if values[2] == "":
+			if path == "":
 				files = []
 			else:
-				files = values[2].split(";")
+				files = path.split(";")
 		except AttributeError:
 			files = []
-		try:
-			door_width = int(values[3])
-		except ValueError:
-			door_width = None
 
 		print("Processing " + str(len(files)) + " file(s)...")
 
 		parser.query_input = query_input
 		sys.stdout = display_str
+		parser.log_file = True
 
-		parser.main(values[0], files=files, refine_portals=values[5], door_width=door_width, grid_color=values[4], author=values[1])
+		options = {
+			"refine_portals": portal_refinement,
+			"door_width": portal_width,
+			"grid_color": grid_color,
+			"author": author_name,
+			"do_cleanup": not disable_cleanup,
+			"ignore_lights": ignore_lights
+		}
+		parser.main(module_name, files=files, options=options)
 		sys.stdout = sys.__stdout__
 		print("Process complete!")
+	elif event == "link_about":
+		print("Open about window")
+		win_about = gui.Window("About", layout_about, finalize=True)
+		win_about["link_website"].set_cursor("hand2")
+		win_about["link_github"].set_cursor("hand2")
+		win_about["link_dungeonfog"].set_cursor("hand2")
+		win_about["link_fantasygrounds"].set_cursor("hand2")
+	else:
+		print("Unknown event: '" + event + "'")
+
+	if win_about is not None:
+		event, values = win_about.read()
+		if event == "link_website":
+			webbrowser.open("https://towerofawesome.org/df2uvtt")
+		elif event == "link_github":
+			webbrowser.open("https://github.com/Forecaster/UniversalVTTExport_to_FGModule")
+		elif event == "link_dungeonfog":
+			webbrowser.open("https://dungeonfog.com")
+		elif event == "link_fantasygrounds":
+			webbrowser.open("https://fantasygrounds.com")
 
 window.close()

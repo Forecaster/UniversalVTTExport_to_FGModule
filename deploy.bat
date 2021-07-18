@@ -1,0 +1,1 @@
+pyinstaller --onefile -n "DungeonFog to Fantasy Grounds Module Generator" --hidden-import=pillow --hidden-import=PIL parser_gui.py

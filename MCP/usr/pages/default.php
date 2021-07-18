@@ -125,6 +125,8 @@ class ModuleDefault extends BaseModule {
 		<br/>
 		<p>The following changelog is for the parser script <code>parser.py</code>:</p>
 		<div class="changelog">
+			<version>v1.2</version>
+			<change>[FIX] </change>
 			<version>v1.1</version>
 			<change>[FIX] All doors are walls bug</change>
 			<change>[FIX] Missing line in doors</change>
