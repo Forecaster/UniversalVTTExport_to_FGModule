@@ -536,7 +536,7 @@ def main(module_name, files, options = {}):
 	print(module_id + "." + options['extension'])
 
 name = "DungeonFog FG Module Generator"
-version = "v1.1"
+version = "v1.2"
 
 def get_argparse():
 	parser = argparse.ArgumentParser(description="Converts one or more df2vtt files into a Fantasy Grounds module.")
