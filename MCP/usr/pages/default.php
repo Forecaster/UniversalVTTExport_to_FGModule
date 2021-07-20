@@ -55,17 +55,56 @@ class ModuleDefault extends BaseModule {
 				margin-bottom: 10px;
 			}
 
-			.changelog version, .changelog change {
+			.changelog version, .changelog change, .changelog date, .changelog fix, .changelog feature, .changelog note, .changelog release, .changelog critical {
 				display: block;
 			}
 
-			.changelog version {
+			.changelog date {
 				font-weight: bold;
 				font-size: 1.2em;
 			}
 
+			.changelog release:before {
+				content: '• [RELEASE] ';
+				font-weight: bold;
+			}
+
+			.changelog release {
+				color : #63ff63;
+			}
+
+			.changelog version:before {
+				content: '• [VERSION] ';
+			}
+
 			.changelog change:before {
-				content: "• ";
+				content: '• [CHANGE] ';
+			}
+
+			.changelog fix:before {
+				content: '• [FIX] ';
+			}
+
+			.changelog feature:before {
+				content: '• [FEATURE] ';
+			}
+
+			.changelog critical:before {
+				content: '• [CRITICAL] ';
+			}
+
+			.changelog critical {
+				color: #ffdf6d;
+			}
+
+			.changelog note:before {
+				content: '• ';
+			}
+
+			.divider {
+				margin-top: 40px;
+				border-bottom: 1px solid gray;
+				margin-bottom:40px;
 			}
 		</style>
 		<p><h2>Hello! Welcome to the Fantasy Grounds module generator for DungeonFog</h2></p>
@@ -77,25 +116,54 @@ class ModuleDefault extends BaseModule {
 		<ul>
 			<li>Import of map image</li>
 			<li>Wall definitions for Line of Sight</li>
-			<li>Toggle-able doors & windows</li>
+			<li>Doors, windows, toggleable walls, & illusory walls</li>
+			<li>Lighting</li>
 		</ul>
 		<?
-		$what = new CollapsibleSection("What does this do?", "<p>This generator takes one or more <code>.df2vtt</code> files exported from <a href='https://dungeonfog.com'>DungeonFog</a> and turns them into a module file for Fantasy Grounds.</p><p>This module can then be added to the <code>Modules</code> directory in Fantasy Grounds and loaded within a campaign to access its contents.</p>", "h3");
-		$what();
-		$how = new CollapsibleSection("How does it do it?", "<p>This page accepts some user input, which includes the <code>.df2vtt</code> files, from the form below and passes it to a parser script that outputs a module file which is then available to download via a link.</p><p>The parser script is written in Python and is made to be usable on its own! See further down!</p>", "h3");
-		$how();
-		$how_get = new CollapsibleSection("How do I get the script?", "<p>You can download the Python script and run it locally on your computer, though doing so has a couple of prerequisites:<ul><li>You need to have <a href='https://www.python.org/downloads/'>Python</a> installed on your system in some form.</li><li>Some knowledge of command line applications.</li><li>In the absence of the above: A willingness to learn new things.</li></ul></p><p>The methods for getting Python on your specific system (if possible) may vary greatly, so I cannot provide specific instructions other than to go to <a href='https://www.python.org/'>the website</a> and read up on what is available.</p><p>Once you have Python working all you should need to do is <a href='parser.py' download='download'>download the parser script</a> into an empty folder, acquire some <code>.df2vtt</code> files from DungeonFog and place them into the same folder, and navigate to this folder using the command line. (This is generally done using the <code>cd [path]</code> command.) You can call the script from anywhere, but the current folder will be the \\\"working directory\\\" which will make pointing at the <code>.df2vtt</code> files a lot easier, and it's where the module file is placed at the end as well.)</p>", "h3");
-		$how_get();
-		$how_do = new CollapsibleSection("Using the script", "<p>To use the script you call the parser script from the command line through the Python interpreter.</p><p>To do so type the following into the command line: <code>python parser.py --h</code></p><p>This command tells the Python interpreter to run the script <code>parser.py</code> if it can be found in the current directory. The <code>--h</code> option tells the script to print its usage instructions which should look something like the following:</p><p><code>usage: parser.py [-h] [-a AUTHOR] [-w [WALL_WIDTH]] [-v] [-e EXTENSION]<br/>[-g GRID_COLOR] [--version]<br/>[M] F [F ...]<br/><br/>Converts one or more df2vtt files into a Fantasy Grounds module.<br/><br/>positional arguments:<br/>  M                The name for the output module<br/>  F                One or more paths to df2vtt files to parse into a module<br/><br/>optional arguments:<br/>  -h, --help       show this help message and exit<br/>  -a AUTHOR        Specify the module author (Default: DungeonFog)<br/>  -w [DOOR_WIDTH]  Specify door width (Default: 10)<br/>  -v               Whether detailed debugging output should be provided.<br/>  -e EXTENSION     The desired file name extension for the output module file.<br/>                   (Default: mod)<br/>  -g GRID_COLOR    The grid color. (Default: 000F00AF)<br/>  --version        show program's version number and exit</code></p><p>Once you can see that this is working you can try using the parser in the most basic way:<br/><code>python parser.py \\\"MyModule\\\" \\\"input file 1.df2vtt\\\"</code></p><p>This will take the file <code>input file 1.df2vtt</code>, if it can be found in the working directory, and include it in the output <code>MyModule.mod</code> which, if the parser was successful, should appear in the working directory as well.</p><p>You may also specify multiple input files after the first, all of which will be included in the same module.</p>", "h3");
-		$how_do();
-		$vid = new CollapsibleSection("Video Tutorial", "<p>I have recorded a video showing the entire process from installing python (on a Windows 10 system) to using the script to get a module to using the new portal refinement mode. It's just under an hour long in its entirety, but it has 8 chapters you can use to navigate the video should you need to.</p><p>You can watch the video on YouTube <a href='https://youtu.be/bAt5vxBlcog' target='_blank'>here</a></p>", "h3");
-		$vid();
-		$issues = new CollapsibleSection("Notes & Known issues", "<h4>Notes:</h4><ul><li>In this web interface the webserver is limited to receiving a total amount of 50 MB, a maximum of 20 files at once, and each individual file cannot exceed 20 MB. The parser script itself have no such limits.</li><li>Using the web-based parser requires uploading the map files to Forecasters server and downloading the resulting files from it. While these files are not publicly accessible in any way no guarantees are made regarding their security. If you wish for guaranteed security see the sections <code>\\\"How do I get the script?\\\"</code> and <code>\\\"Using the script\\\"</code> on how to generate modules on your own computer.</li><li>If you are generating an updated version of a module you have loaded into Fantasy Grounds previously, make sure you use the same name, or any changes or current token positions within a campaign will be lost.</li></ul><h4>Known issues:</h4><ul><li>Due to limited data within the df2vtt format all windows are treated as doors. Once the file includes tags to distinguish them this will be fixed.</li><li>Curved walls have a rather small amount of points within the exported file which results in noticeable gaps between the LOS wall and the actual wall.</li></ul>", "h3");
-		$issues();
-		$feedback = new CollapsibleSection("Feedback", "<p>I stated this above, but I'm summarizing it just in case someone misses it (with a nice clear title too):</p><p><b>Any feedback, bug report, or feature request can be delivered in the following ways:</b></p><ul><li>Creating an issue on <a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/issues/new/choose'>GitHub</a> (requires a GitHub account)</li><li>Reaching out to Forecaster on the <a href='https://dungeonfog.com/discord'>DungeonFog Discord Server</a> (Requires a Discord account)</li><li>Emailing forecaster at <a href='mailto:feedback@towerofawesome.org'>feedback@towerofawesome.org</a>. Put <code>df2vtt</code> in the subject please!§</li></ul>", "h3");
-		$feedback();
+		$what = new CollapsibleSection("What does this do?", array(
+			"<p>This generator takes one or more <code>.df2vtt</code> files exported from <a href='https://dungeonfog.com'>DungeonFog</a> and turns them into a module file for Fantasy Grounds. (One module can contain multiple maps)</p>",
+			"<p>This module can then be added to the <code>Modules</code> directory in Fantasy Grounds and loaded within a campaign to access its contents.</p>"), "h3");
+		$how_get = new CollapsibleSection("How do I use the generator?", array(
+			"<p><b>You have three choices for using the generator, and they are as follows:</b>",
+			"<ol><li>Use the limited online generator on this page. Easy.</li>",
+			"<li>Download the executable and run the generator locally. Intermediate.</li>",
+			"<li>Download the Python scripts and run the generator via the commandline. Expert.</li></ol>",
+			"<p>Each of these have their own advantages and drawbacks. See the following sections for more information about each.</p>"), "h3");
+		$web_generator = new CollapsibleSection("Online Generator", array(
+			"<p>The web generator is easy and quick to use, and requires no setup, but it does require uploading the <code>.df2vtt</code> files and then downloading the resulting module. This of course requires an internet connection.</p>",
+			"<p>There are also some restrictions on file sizes:</p>",
+			"<ul><li>A maximum of 20 files can be uploaded to create a single module.</li>",
+			"<li>Each file can be a maximum of 20 MB.</li>",
+			"<li>The maximum total size of all the files combined is 50 MB.</li></ul>",
+			"<p>There are also no settings available for the online generator at the moment.</p>"), "h3");
+		$exe_generator = new CollapsibleSection("Executable", array(
+			"<p>You can download the generator as an executable which includes everything required to run it.</p>",
+			"<p>With this you can generate modules locally on your system without an internet connection or having to send the map files anywhere. You also get access to more options, such as the portal refinement system, and more.</p>",
+			"<p>The executable can also be run from the commandline without the GUI if required.</p>"
+		), "h3");
+		$script_generator = new CollapsibleSection("Python Scripts", array(
+			"<p>Advanced users may wish to download the raw Python scripts which can be through the Python interpreter.</p>",
+			"<p>This requires the correct libraries to be installed in the Python environment.</p>",
+			"<p>I'm not going to provide instructions on how to do this. The generator will complain if you try to use a feature without the required libraries installed.</p>"
+		), "h3");
+//		$how_do = new CollapsibleSection("Using the script", "<p>To use the script you call the parser script from the command line through the Python interpreter.</p><p>To do so type the following into the command line: <code>python parser.py --h</code></p><p>This command tells the Python interpreter to run the script <code>parser.py</code> if it can be found in the current directory. The <code>--h</code> option tells the script to print its usage instructions which should look something like the following:</p><p><code>usage: parser.py [-h] [-a AUTHOR] [-w [WALL_WIDTH]] [-v] [-e EXTENSION]<br/>[-g GRID_COLOR] [--version]<br/>[M] F [F ...]<br/><br/>Converts one or more df2vtt files into a Fantasy Grounds module.<br/><br/>positional arguments:<br/>  M                The name for the output module<br/>  F                One or more paths to df2vtt files to parse into a module<br/><br/>optional arguments:<br/>  -h, --help       show this help message and exit<br/>  -a AUTHOR        Specify the module author (Default: DungeonFog)<br/>  -w [DOOR_WIDTH]  Specify door width (Default: 10)<br/>  -v               Whether detailed debugging output should be provided.<br/>  -e EXTENSION     The desired file name extension for the output module file.<br/>                   (Default: mod)<br/>  -g GRID_COLOR    The grid color. (Default: 000F00AF)<br/>  --version        show program's version number and exit</code></p><p>Once you can see that this is working you can try using the parser in the most basic way:<br/><code>python parser.py \\\"MyModule\\\" \\\"input file 1.df2vtt\\\"</code></p><p>This will take the file <code>input file 1.df2vtt</code>, if it can be found in the working directory, and include it in the output <code>MyModule.mod</code> which, if the parser was successful, should appear in the working directory as well.</p><p>You may also specify multiple input files after the first, all of which will be included in the same module.</p>", "h3");
+//		$how_do();
+//		$vid = new CollapsibleSection("Video Tutorial", "<p>I have recorded a video showing the entire process from installing python (on a Windows 10 system) to using the script to get a module to using the new portal refinement mode. It's just under an hour long in its entirety, but it has 8 chapters you can use to navigate the video should you need to.</p><p>You can watch the video on YouTube <a href='https://youtu.be/bAt5vxBlcog' target='_blank'>here</a></p>", "h3");
+		$issues = new CollapsibleSection("Notes & Known issues", array("<h4>Notes:</h4>",
+			"<ul><li>Using the web-based parser requires uploading the map files to Forecasters server and downloading the resulting files from it. While these files are not publicly accessible in any way, no guarantees are made regarding their security. If you wish for guaranteed security you must run the generator locally. See the other sections for instructions on how to do this.</li>",
+			"<li>If you are generating an updated version of a module you have loaded into Fantasy Grounds previously, make sure you use the same name for the module and any maps within, or any changes or current token positions within a campaign will be lost.</li>",
+			"</ul>",
+			"<h4>Known issues:</h4>",
+			"<ul><li>Due to limited data within the df2vtt format all windows are treated as doors by default. To specify which portals are windows, toggleable walls, etc, use the portal refinement mode. Once portals are tagged in the export these will be used to define defaults (though these will not cover all types available in Fantasy Grounds).</li>",
+			"</ul>"), "h3");
+		$feedback = new CollapsibleSection("Feedback", array("<p>I stated this above, but I'm summarizing it just in case someone misses it (with a nice clear title too):</p>",
+			"<p><b>Any feedback, bug report, or feature request can be delivered in the following ways:</b></p>",
+			"<ul><li>Creating an issue on <a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/issues/new/choose'>GitHub</a> (requires a GitHub account)</li>",
+			"<li>Reaching out to Forecaster on the <a href='https://dungeonfog.com/discord'>DungeonFog Discord Server</a> (Requires a Discord account)</li>",
+			"<li>Emailing forecaster at <a href='mailto:feedback@towerofawesome.org'>feedback@towerofawesome.org</a>. Put <code>df2vtt</code> in the subject please!§</li></ul>"), "h3");
 		?>
 		<h3 style="margin-top: 30px;">Generate Module</h3>
+		<h6>For the application version of the module generator see the sections below the form. Get more options and features by downloading the application.</h6>
 		<?
 
 		if (!isset(self::$file))
@@ -106,7 +174,12 @@ class ModuleDefault extends BaseModule {
 			<p>If the issue persist please report this! Check the parser output below and include it in the report!</p>
 			<h3>Parser output:</h3>
 			<code>
-				<?= nl2br(self::$cmd_output) ?>
+				<?
+				if (!empty(self::$cmd_output))
+					echo nl2br(self::$cmd_output);
+				else
+					echo "No output from parser... If this issue persists please notify us via any of the methods found under the Feedback header!";
+				?>
 			</code>
 			<?
 		} else {
@@ -117,22 +190,48 @@ class ModuleDefault extends BaseModule {
 
 			<h3>Parser output:</h3>
 				<code>
-					<?= nl2br(self::$cmd_output) ?>
+					<?
+					if (!empty(self::$cmd_output))
+						echo nl2br(self::$cmd_output);
+					else
+						echo "No output from parser... If this issue persists please notify us via any of the methods found under the Feedback header!";
+					?>
 				</code>
 			<?
 		}
 		?>
-		<br/>
-		<p>The following changelog is for the parser script <code>parser.py</code>:</p>
+		<div class="divider"></div>
+		<?
+
+		$what();
+		$how_get();
+		$web_generator();
+		$exe_generator();
+		$script_generator();
+//		$vid();
+		$issues();
+		$feedback();
+
+		?>
+		<div class="divider"></div>
+		<p>The following changelog is for the module generator in general, including this web page, the application and the Python scripts. Changes, features, or fixes unless specified may apply to all of these.</p>
 		<div class="changelog">
-			<version>v1.2</version>
-			<change>[FIX] </change>
-			<version>v1.1</version>
-			<change>[FIX] All doors are walls bug</change>
-			<change>[FIX] Missing line in doors</change>
-			<change>[FEATURE] Add -p (portal refine) mode to script (not available in web version)</change>
-			<version>v1.0</version>
-			<change>Initial release</change>
+			<date>2021-07-20</date>
+			<change>Improve layout of web page</change>
+			<change>Improve feedback from script when using form</change>
+			<date>2021-07-18</date>
+			<release>v1.2</release>
+			<feature>GUI added</feature>
+			<feature>Portal refinement mode added</feature>
+			<feature>Light support added</feature>
+			<date>2021-05-08</date>
+			<release>v1.1</release>
+			<fix>All doors are walls bug</fix>
+			<fix>Missing line in doors</fix>
+			<feature>Add -p (portal refine) mode to script (not available in web version)</feature>
+			<date>2021-04-26</date>
+			<release>v1.0</release>
+			<note>Initial release</note>
 		</div>
 		<?
 		echo require_once __DIR__ . "/stats.php";
