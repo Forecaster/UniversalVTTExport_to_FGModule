@@ -11,13 +11,16 @@ class ModuleDefault extends BaseModule {
 	private static $path;
 	private static $file;
 	private static $cmd_output;
+	private static $script_error = false;
 	public static function Pre() {
 		self::$form = new Form();
 
 		$name = new TextBox("Module Name", array("required" => true, "defaultValue" => "MyModule"));
 		$author = new TextBox("Module Author", array("placeholder" => "DungeonFog", "description" => "The author the module is credited to. Used for organization within Fantasy Grounds."));
 		$files = new FileSelector("df2vtt files", array("acceptedFiles" => array("df2vtt"), "allowMultiple" => true, "minFiles" => 1, "description" => "Max individual file size is 20 MB. Max total file size is 50 MB. A maximum of 20 files can be uploaded at a time."));
-		self::$form->AddFields(array($name, $author, $files));
+		$ignore_lights = new CheckBox("Ignore lights");
+		$ignore_walls_and_doors = new CheckBox("Ignore walls & doors");
+		self::$form->AddFields(array($name, $author, $files, $ignore_lights, $ignore_walls_and_doors));
 		@session_start();
 
 		if (self::$form->IsSubmitted()) {
@@ -32,11 +35,27 @@ class ModuleDefault extends BaseModule {
 			if (!empty($author->GetValue()))
 				$auth = " -a \"" . $author->GetValue() . "\"";
 			chdir($dir_path);
-			$cmd = escapeshellcmd("python3 " . __DIR__ . "/../../parser.py -vc $auth \"$module_name\" \"" . implode("\" \"", $file_list) . "\"");
-			self::$cmd_output = shell_exec($cmd);
-			if (stristr(self::$cmd_output, "Finished processing ") !== false) {
+			$options = "-v";
+			if ($ignore_lights->GetValue() == true)
+				$options .= "i";
+			if ($ignore_walls_and_doors->GetValue() == true)
+				$options .= "o";
+			$cmd = escapeshellcmd("python3 " . __DIR__ . "/../generator_scripts/df2vtt_parser.py $options $auth \"$module_name\" \"" . implode("\" \"", $file_list) . "\"") . " 2>&1";
+			try {
+				@$final_line = exec($cmd, self::$cmd_output, $result_code);
+			} catch (Exception $e) {
+				self::$cmd_output = array($e->getMessage());
+			}
+			if (count(self::$cmd_output) == 0)
+				self::$cmd_output = array("No output from parser... If this issue persists please notify us!");
+			if ($result_code != 0) {
+				self::$script_error = true;
+			}
+			self::$cmd_output = implode("\n", self::$cmd_output) . "\n\nProgram exited with code " . $result_code;
+			self::$cmd_output = preg_replace('/".*\/generator_scripts\//m', "\"<truncated_path>/generator_scripts/", self::$cmd_output);
+			if ($result_code == 0) {
 				self::$path = "usr/sessions/" . $session_id . "/";
-				self::$file = array_reverse(explode("\n", self::$cmd_output))[1];
+				self::$file = $final_line;
 			} else {
 				self::$file = false;
 			}
@@ -46,6 +65,16 @@ class ModuleDefault extends BaseModule {
 	public static function Content1() {
 		?>
 		<style>
+			.error {
+				color: red;
+				font-weight: bold;
+				font-size: 1.2em;
+				background-color: black;
+				padding: 5px 40px 5px 40px;
+				display: inline-block;
+				border-radius: 15px;
+			}
+
 			.changelog {
 				background-color: #636363;
 				color: white;
@@ -168,19 +197,13 @@ class ModuleDefault extends BaseModule {
 
 		if (!isset(self::$file))
 			echo self::$form->BuildForm();
-		elseif (self::$file === false) {
+		elseif (self::$file === false || self::$script_error) {
 			?>
-			<p>Unable to generate module! <a href=".">Try again!</a></p>
-			<p>If the issue persist please report this! Check the parser output below and include it in the report!</p>
+			<p class="error">An error occurred!</p>
+			<p>Unable to generate module! <a href=".">Please try again!</a></p>
+			<p>If the issue persist please report this via one of the methods under Feedback! Check the parser output below and include it in the report!</p>
 			<h3>Parser output:</h3>
-			<code>
-				<?
-				if (!empty(self::$cmd_output))
-					echo nl2br(self::$cmd_output);
-				else
-					echo "No output from parser... If this issue persists please notify us via any of the methods found under the Feedback header!";
-				?>
-			</code>
+			<textarea readonly="readonly" title="Script output" style="resize: vertical; width: 100%; height: 300px;"><?= self::$cmd_output; ?></textarea>
 			<?
 		} else {
 			?>
@@ -189,17 +212,16 @@ class ModuleDefault extends BaseModule {
 			<p><a href=".">Generate another module</a>
 
 			<h3>Parser output:</h3>
-				<code>
-					<?
-					if (!empty(self::$cmd_output))
-						echo nl2br(self::$cmd_output);
-					else
-						echo "No output from parser... If this issue persists please notify us via any of the methods found under the Feedback header!";
-					?>
-				</code>
+				<textarea readonly="readonly" title="Script output" style="resize: vertical; width: 100%; height: 300px;"><?= self::$cmd_output; ?></textarea>
 			<?
 		}
 		?>
+		<div class="divider"></div>
+		<p>The module name and list of files are passed to the script as normal. The module author field is passed to the script using the <code>-a</code> parameter.</p>
+		<p>Additional options passed to the script:</p>
+		<ul>
+			<li><code>-v</code> Makes the script output mor detailed information about what it's doing</li>
+		</ul>
 		<div class="divider"></div>
 		<?
 
@@ -219,6 +241,7 @@ class ModuleDefault extends BaseModule {
 			<date>2021-07-20</date>
 			<change>Improve layout of web page</change>
 			<change>Improve feedback from script when using form</change>
+			<fix>Update generator form to work with updated scripts</fix>
 			<date>2021-07-18</date>
 			<release>v1.2</release>
 			<feature>GUI added</feature>

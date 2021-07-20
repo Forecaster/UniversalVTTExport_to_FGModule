@@ -77,13 +77,13 @@ def main(module_name, files, options = {}):
 			print("Import error. Unable to load Pillow module. This is required to use refine portals. Either run without -p or install the required module.")
 			if verbose:
 				print(traceback.format_exc())
-			sys.exit()
+			sys.exit(1)
 		if options['test_image']:
 			sys.stdout = sys.__stdout__
 			print("Import error. Unable to load Pillow module. This is required to generate test image. Either run without -p or install the required module.")
 			if verbose:
 				print(traceback.format_exc())
-			sys.exit()
+			sys.exit(1)
 	try:
 		import shapely
 	except ImportError:
@@ -91,7 +91,7 @@ def main(module_name, files, options = {}):
 			print("Import error. Unable to load Shapely module. This is required to process lights and fix intersecting walls.")
 			if verbose:
 				print(traceback.format_exc())
-			sys.exit()
+			sys.exit(1)
 
 	if options['extract']:
 		vprint("Extraction mode enabled!")
@@ -406,9 +406,9 @@ def main(module_name, files, options = {}):
 		cleanup.append(image_path)
 		counter += 1
 
-		font = ImageFont.truetype("arial.ttf", 8)
-		wall_color = (255,0,0)
 		if options['test_image'] or options['test_image_textless']:
+			font = ImageFont.truetype("arial.ttf", 8)
+			wall_color = (255,0,0)
 			source_img = Image.open("images/" + filename + ".png").convert("RGBA")
 			draw = ImageDraw.Draw(source_img)
 			counter_walls = -1

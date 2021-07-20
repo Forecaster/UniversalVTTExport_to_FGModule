@@ -4,8 +4,6 @@ import math
 # From: https://stackoverflow.com/a/1937202
 # Answer by Andreas Brinck
 # <editor-fold>
-from PIL import ImageDraw
-
 
 def expand_line(line, t):
 	"""
@@ -144,9 +142,15 @@ def polygon_to_line_set(polygon):
 	points.append((first_point, prev_point))
 	return points
 
-def draw_polygon(draw: ImageDraw, polygon, color = (255, 255, 255), line_width = 2):
-	for line in polygon_to_line_set(polygon):
-		draw.line(tuple_to_point_list(line), fill=color, width=line_width)
+try:
+	from PIL import ImageDraw
+	def draw_polygon(draw: ImageDraw, polygon, color = (255, 255, 255), line_width = 2):
+		for line in polygon_to_line_set(polygon):
+			draw.line(tuple_to_point_list(line), fill=color, width=line_width)
+except Exception:
+	def draw_polygons():
+		return None
+	pass
 
 def check_point_is_inside_polygon(point, polygon):
 	line = (point, (point[0] + 10000, point[1]))
