@@ -186,7 +186,7 @@ class ModuleDefault extends BaseModule {
 			"<ul><li>Due to limited data within the df2vtt format all windows are treated as doors by default. To specify which portals are windows, toggleable walls, etc, use the portal refinement mode. Once portals are tagged in the export these will be used to define defaults (though these will not cover all types available in Fantasy Grounds).</li>",
 			"</ul>"), "h3");
 		$feedback = new CollapsibleSection("Feedback", array("<p>I stated this above, but I'm summarizing it just in case someone misses it (with a nice clear title too):</p>",
-			"<p><b>Any feedback, bug report, or feature request can be delivered in the following ways:</b></p>",
+			"<p><b>Any bug report, feature request, or other feedback can be delivered in the following ways:</b></p>",
 			"<ul><li>Creating an issue on <a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/issues/new/choose'>GitHub</a> (requires a GitHub account)</li>",
 			"<li>Reaching out to Forecaster on the <a href='https://dungeonfog.com/discord'>DungeonFog Discord Server</a> (Requires a Discord account)</li>",
 			"<li>Emailing forecaster at <a href='mailto:feedback@towerofawesome.org'>feedback@towerofawesome.org</a>. Put <code>df2vtt</code> in the subject please!§</li></ul>"), "h3");
