@@ -8,6 +8,11 @@ class ModuleDefault extends BaseModule {
 	}
 
 	private static $form;
+	private static $name;
+	private static $author;
+	private static $files;
+	private static $ignore_lights;
+	private static $ignore_walls_and_doors;
 	private static $path;
 	private static $file;
 	private static $cmd_output;
@@ -15,29 +20,30 @@ class ModuleDefault extends BaseModule {
 	public static function Pre() {
 		self::$form = new Form();
 
-		$name = new TextBox("Module Name", array("required" => true, "defaultValue" => "MyModule"));
-		$author = new TextBox("Module Author", array("placeholder" => "DungeonFog", "description" => "The author the module is credited to. Used for organization within Fantasy Grounds."));
-		$files = new FileSelector("df2vtt files", array("acceptedFiles" => array("df2vtt"), "allowMultiple" => true, "minFiles" => 1, "description" => "Max individual file size is 20 MB. Max total file size is 50 MB. A maximum of 20 files can be uploaded at a time."));
-		$ignore_lights = new CheckBox("Ignore lights");
-		$ignore_walls_and_doors = new CheckBox("Ignore walls & doors");
-		self::$form->AddFields(array($name, $author, $files, $ignore_lights, $ignore_walls_and_doors));
+		self::$name = new TextBox("Module Name", array("required" => true, "defaultValue" => "MyModule", "onKeyUp" => "on_field_change()"));
+		self::$author = new TextBox("Module Author", array("placeholder" => "DungeonFog", "description" => "The author the module is credited to. Used for organization within Fantasy Grounds.", "onKeyUp" => "on_field_change()"));
+		self::$files = new FileSelector("df2vtt files", array("acceptedFiles" => array("df2vtt"), "allowMultiple" => true, "minFiles" => 1, "description" => "Max individual file size is 20 MB. Max total file size is 50 MB. A maximum of 20 files can be uploaded at a time.", "onChange" => "on_field_change()"));
+		self::$ignore_lights = new CheckBox("Ignore lights", array("onChange" => "on_field_change()"));
+		self::$ignore_walls_and_doors = new CheckBox("Ignore walls & doors", array("onChange" => "on_field_change()"));
+		self::$form->AddFields(array(self::$name, self::$author, self::$files, self::$ignore_lights, self::$ignore_walls_and_doors));
 
 		if (self::$form->IsSubmitted()) {
 			$session_id = uniqid("", true);
 			$dir_path = __DIR__ . "/../sessions/" . $session_id . "/";
 			@mkdir($dir_path, 0777, true);
-			$files->MoveUploadedFiles($dir_path);
-			$file_list = explode(", ", $files->GetValue());
+			file_put_contents($dir_path . "created", time());
+			self::$files->MoveUploadedFiles($dir_path);
+			$file_list = explode(", ", self::$files->GetValue());
 
-			$module_name = $name->GetValue();
+			$module_name = self::$name->GetValue();
 			$auth = "";
-			if (!empty($author->GetValue()))
-				$auth = " -a \"" . $author->GetValue() . "\"";
+			if (!empty(self::$author->GetValue()))
+				$auth = " -a \"" . self::$author->GetValue() . "\"";
 			chdir($dir_path);
 			$options = "-v";
-			if ($ignore_lights->GetValue() == true)
+			if (self::$ignore_lights->IsChecked() == true)
 				$options .= "i";
-			if ($ignore_walls_and_doors->GetValue() == true)
+			if (self::$ignore_walls_and_doors->isChecked() == true)
 				$options .= "o";
 			$cmd = escapeshellcmd("python3 " . __DIR__ . "/../generator_scripts/df2vtt_parser.py $options $auth \"$module_name\" \"" . implode("\" \"", $file_list) . "\"") . " 2>&1";
 			try {
@@ -135,6 +141,42 @@ class ModuleDefault extends BaseModule {
 				margin-bottom:40px;
 			}
 		</style>
+		<script>
+			let timeout = null
+
+			const base_command = "python3 df2vtt_parser.py{options}{author} {module_name} {files}";
+			function on_field_change() {
+				if (timeout !== null)
+					clearTimeout(timeout);
+				timeout = setTimeout(function() {
+					const f_name = document.getElementById('<?= self::$name->id ?>');
+					const f_author = document.getElementById('<?= self::$author->id ?>');
+					const f_files = document.getElementById('<?= self::$files->id ?>');
+					const f_ignore_lights = document.getElementById('<?= self::$ignore_lights->id ?>');
+					const f_ignore_walls_and_doors = document.getElementById('<?= self::$ignore_walls_and_doors->id ?>');
+					let module_name = f_name.value;
+					let author = f_author.value;
+					if (author.replaceAll(" ", "").length > 0)
+						author = " -a \"" + author + "\"";
+					let options = [];
+					if (f_ignore_lights.checked)
+						options.push("i");
+					if (f_ignore_walls_and_doors.checked)
+						options.push("o")
+					if (options.length > 0)
+						options = " -" + options.join("");
+					else
+						options = "";
+					let files = [];
+					for (let i = 0; i < f_files.files.length; i++) {
+						files.push("\"" + f_files.files[i]["name"] + "\"");
+					}
+					let cmd = base_command.replace("{module_name}", module_name).replace("{author}", author).replace("{options}", options).replace("{files}", files.join(" "));
+
+					document.getElementById("cmd_output").value = cmd;
+				}, 100);
+			}
+		</script>
 		<p><h2>Hello! Welcome to the Fantasy Grounds module generator for DungeonFog</h2></p>
 		<p>This page and the generator itself were coded in their entirety by Forecaster, for the benefit of the venn diagram overlap between DungeonFog users and Fantasy Grounds users (such as myself).</p>
 		<p>You can get started right away by using the form below, or read on for more information!</p>
@@ -194,9 +236,10 @@ class ModuleDefault extends BaseModule {
 		<h6>For the application version of the module generator see the sections below the form. Get more options and features by downloading the application.</h6>
 		<?
 
-		if (!isset(self::$file))
+		if (!isset(self::$file)) {
 			echo self::$form->BuildForm();
-		elseif (self::$file === false || self::$script_error) {
+			echo "<input type='text' readonly='readonly' id='cmd_output' style='width: 100%; margin-top: 30px;' placeholder='Command example'></input>";
+		} elseif (self::$file === false || self::$script_error) {
 			?>
 			<p class="error">An error occurred!</p>
 			<p>Unable to generate module! <a href=".">Please try again!</a></p>
@@ -237,6 +280,9 @@ class ModuleDefault extends BaseModule {
 		<div class="divider"></div>
 		<p>The following changelog is for the module generator in general, including this web page, the application and the Python scripts. Changes, features, or fixes unless specified may apply to all of these.</p>
 		<div class="changelog">
+			<date>2021-07-26</date>
+			<fix>Ignore lights and ignore walls & doors is always on in online generator</fix>
+			<new>Add example command output based on form fields</new>
 			<date>2021-07-20</date>
 			<change>Improve layout of web page</change>
 			<change>Improve feedback from script when using form</change>
