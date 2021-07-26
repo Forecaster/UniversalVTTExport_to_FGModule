@@ -21,10 +21,9 @@ class ModuleDefault extends BaseModule {
 		$ignore_lights = new CheckBox("Ignore lights");
 		$ignore_walls_and_doors = new CheckBox("Ignore walls & doors");
 		self::$form->AddFields(array($name, $author, $files, $ignore_lights, $ignore_walls_and_doors));
-		@session_start();
 
 		if (self::$form->IsSubmitted()) {
-			$session_id = session_id();
+			$session_id = uniqid("", true);
 			$dir_path = __DIR__ . "/../sessions/" . $session_id . "/";
 			@mkdir($dir_path, 0777, true);
 			$files->MoveUploadedFiles($dir_path);
@@ -155,8 +154,8 @@ class ModuleDefault extends BaseModule {
 		$how_get = new CollapsibleSection("How do I use the generator?", array(
 			"<p><b>You have three choices for using the generator, and they are as follows:</b>",
 			"<ol><li>Use the limited online generator on this page. Easy.</li>",
-			"<li>Download the executable and run the generator locally. Intermediate.</li>",
-			"<li>Download the Python scripts and run the generator via the commandline. Expert.</li></ol>",
+			"<li><a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/releases'>Download the executable</a> and run the generator locally. Intermediate.</li>",
+			"<li><a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule'>Download the Python scripts</a> and run the generator via the commandline. Expert.</li></ol>",
 			"<p>Each of these have their own advantages and drawbacks. See the following sections for more information about each.</p>"), "h3");
 		$web_generator = new CollapsibleSection("Online Generator", array(
 			"<p>The web generator is easy and quick to use, and requires no setup, but it does require uploading the <code>.df2vtt</code> files and then downloading the resulting module. This of course requires an internet connection.</p>",
@@ -166,12 +165,12 @@ class ModuleDefault extends BaseModule {
 			"<li>The maximum total size of all the files combined is 50 MB.</li></ul>",
 			"<p>There are also no settings available for the online generator at the moment.</p>"), "h3");
 		$exe_generator = new CollapsibleSection("Executable", array(
-			"<p>You can download the generator as an executable which includes everything required to run it.</p>",
+			"<p>You can <a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/releases'>download the generator as an executable</a> which includes everything required to run it.</p>",
 			"<p>With this you can generate modules locally on your system without an internet connection or having to send the map files anywhere. You also get access to more options, such as the portal refinement system, and more.</p>",
 			"<p>The executable can also be run from the commandline without the GUI if required.</p>"
 		), "h3");
 		$script_generator = new CollapsibleSection("Python Scripts", array(
-			"<p>Advanced users may wish to download the raw Python scripts which can be through the Python interpreter.</p>",
+			"<p>Advanced users may wish to <a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule'>download the raw Python scripts</a> which can be through the Python interpreter.</p>",
 			"<p>This requires the correct libraries to be installed in the Python environment.</p>",
 			"<p>I'm not going to provide instructions on how to do this. The generator will complain if you try to use a feature without the required libraries installed.</p>"
 		), "h3");
