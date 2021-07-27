@@ -56,7 +56,7 @@ class ModuleDefault extends BaseModule {
 			if ($result_code != 0) {
 				self::$script_error = true;
 			}
-			self::$cmd_output = implode("\n", self::$cmd_output) . "\n\nProgram exited with code " . $result_code;
+			self::$cmd_output = implode("\n", self::$cmd_output) . "\n\nProcess finished with exit code " . $result_code;
 			self::$cmd_output = preg_replace('/".*\/generator_scripts\//m', "\"<truncated_path>/generator_scripts/", self::$cmd_output);
 			if ($result_code == 0) {
 				self::$path = "usr/sessions/" . $session_id . "/";
@@ -89,7 +89,7 @@ class ModuleDefault extends BaseModule {
 				margin-bottom: 10px;
 			}
 
-			.changelog version, .changelog change, .changelog date, .changelog fix, .changelog feature, .changelog note, .changelog release, .changelog critical {
+			.changelog version, .changelog change, .changelog date, .changelog fix, .changelog new, .changelog note, .changelog release, .changelog critical {
 				display: block;
 			}
 
@@ -113,14 +113,17 @@ class ModuleDefault extends BaseModule {
 
 			.changelog change:before {
 				content: '• [CHANGE] ';
+				color: #a3ffea
 			}
 
 			.changelog fix:before {
 				content: '• [FIX] ';
+				color: #ffdf6d;
 			}
 
-			.changelog feature:before {
-				content: '• [FEATURE] ';
+			.changelog new:before {
+				content: '• [NEW] ';
+				color: #d3abff
 			}
 
 			.changelog critical:before {
@@ -280,23 +283,30 @@ class ModuleDefault extends BaseModule {
 		<div class="divider"></div>
 		<p>The following changelog is for the module generator in general, including this web page, the application and the Python scripts. Changes, features, or fixes unless specified may apply to all of these.</p>
 		<div class="changelog">
+			<date>2021-07-27</date>
+			<release>v1.2.1</release>
+			<fix>Portal number disappearing in portal refinement window when reaching double digits</fix>
+			<fix>Portal refinement breaking when trying to parse more than one map</fix>
+			<new>Implemented proper logging system with levels</new>
+			<new>Improved error handling for input files</new>
+			<new>Block clicking Generate button in GUI with no files selected</new>
 			<date>2021-07-26</date>
 			<fix>Ignore lights and ignore walls & doors is always on in online generator</fix>
-			<new>Add example command output based on form fields</new>
+			<new>Example command output based on form fields</new>
 			<date>2021-07-20</date>
-			<change>Improve layout of web page</change>
-			<change>Improve feedback from script when using form</change>
+			<change>Improved layout of web page</change>
+			<change>Improved feedback from script when using form</change>
 			<fix>Update generator form to work with updated scripts</fix>
 			<date>2021-07-18</date>
 			<release>v1.2</release>
-			<feature>GUI added</feature>
-			<feature>Portal refinement mode added</feature>
-			<feature>Light support added</feature>
+			<new>GUI & Executable</new>
+			<new>Portal refinement mode</new>
+			<new>Lighting support</new>
 			<date>2021-05-08</date>
 			<release>v1.1</release>
 			<fix>All doors are walls bug</fix>
 			<fix>Missing line in doors</fix>
-			<feature>Add -p (portal refine) mode to script (not available in web version)</feature>
+			<new>-p (portal refine) mode to script (not available in web version)</new>
 			<date>2021-04-26</date>
 			<release>v1.0</release>
 			<note>Initial release</note>
