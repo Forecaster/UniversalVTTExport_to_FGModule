@@ -1,1 +1,1 @@
-pyinstaller --onefile -n "DungeonFog_to_Fantasy_Grounds_Module_Generator" --hidden-import=pillow --hidden-import=PIL parser_gui.py
+pyinstaller --onefile -n "DungeonFog_to_Fantasy_Grounds_Module_Generator_Windows" --hidden-import=pillow --hidden-import=PIL parser_gui.py
