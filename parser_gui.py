@@ -22,19 +22,12 @@ else:
 
 more_options_visible = False
 
-window_query = None
-display_str = StringIO()
+window_query: gui.Window = None
 def query_input(query):
-	sys.stdout = sys.__stdout__
-	global window_query, display_str
+	global window_query
 	if not window_query:
 		query_counter = 1
-		exp = re.compile("A total of (\d*) ")
-		match = exp.match(display_str.getvalue())
-		if match:
-			amt = int(match.group(1))
-		else:
-			amt = 99
+		amt = parser.portal_count_output
 		window_query = gui.Window("Query", [
 			[gui.Text("A total of " + str(amt) + " portals were found!")],
 			[gui.ProgressBar(amt - 1, orientation='h', size=(20, 20), key='pbar')],
@@ -42,7 +35,7 @@ def query_input(query):
 			[gui.Text("Each portal has been assigned a number placed next to each in the image.")],
 			[gui.Text("Assign each portal a type below.")],
 			[gui.Text("")],
-			[gui.Text("Choose type for portal #" + str(query_counter), key="str_portal")],
+			[gui.Text("Choose type for portal #" + str(query_counter), key="str_portal", size=(40,1))],
 			[gui.DropDown(["door", "window", "passage", "toggleable_wall", "illusory_wall"], key="ddl_portal")],
 			[gui.Button("Previous", key="btn_prev", disabled=True), gui.Button("Next", key="btn_next"), gui.Button("Done", key="btn_done", visible=False)],
 			[gui.Text("")],
@@ -52,17 +45,16 @@ def query_input(query):
 			[gui.Text("Passage - Leaves gap in wall")],
 			[gui.Text("Toggleable wall - Like a door, but flush with the wall")],
 			[gui.Text("Illusory wall - Blocks LOS, never blocks path, cannot be toggled")]
-		])
+		], enable_close_attempted_event=True)
 		window_query.finalize()
 		portals = ["portallist"]
 		while True:
 			event, values = window_query.read()
-			if event == gui.WIN_CLOSED or event == "btn_done":
-				try:
-					portals[query_counter] = values["ddl_portal"]
-				except IndexError:
-					portals.insert(query_counter, values["ddl_portal"])
+			if event == gui.WINDOW_CLOSED or event == "btn_done":
 				break
+			elif event == gui.WINDOW_CLOSE_ATTEMPTED_EVENT:
+				if gui.popup_yes_no('Closing this window will proceed with the processing and assume any unassigned portals are doors.') == 'Yes':
+					break
 			elif event == "btn_prev":
 				try:
 					portals[query_counter] = values["ddl_portal"]
@@ -93,9 +85,13 @@ def query_input(query):
 				window_query["ddl_portal"].Update(portals[query_counter])
 			except IndexError:
 				window_query["ddl_portal"].Update("")
+		parser.vprint("Query done! (" + event + ")", 'debug')
+		try:
+			portals[query_counter] = values["ddl_portal"]
+		except IndexError:
+			portals.insert(query_counter, values["ddl_portal"])
 		window_query.close()
 		window_query = None
-		display_str = ""
 		return ";".join(portals)
 
 
@@ -197,48 +193,53 @@ while True:
 		pass
 
 	if event == gui.WIN_CLOSED: # if user closes window
-		if window_query is not None:
-			window_query.close()
 		break
 	elif event == "More options":
 		more_options_visible = not more_options_visible
 		window["more_options"].update(visible=more_options_visible)
 	elif event == "Generate":
-		files = []
-		try:
-			if path == "":
-				files = []
-			else:
-				files = path.split(";")
-		except AttributeError:
+		print("'" + values['files'] + "'")
+		if values['files'] == "":
+			gui.popup("No files chosen for processing.\n\nSelect at least one df2vtt file by using the Browse button or by entering paths or filenames manually.", keep_on_top=True)
+		else:
 			files = []
+			try:
+				if path == "":
+					files = []
+				else:
+					files = path.split(";")
+			except AttributeError:
+				files = []
 
-		print("Processing " + str(len(files)) + " file(s)...")
+			parser.vprint("Processing " + str(len(files)) + " file(s)...", 'info')
 
-		parser.query_input = query_input
-		sys.stdout = display_str
-		parser.log_file = True
+			parser.query_input = query_input
+			parser.log_file = True
 
-		options = {
-			"refine_portals": portal_refinement,
-			"door_width": portal_width,
-			"grid_color": grid_color,
-			"author": author_name,
-			"do_cleanup": not disable_cleanup,
-			"ignore_lights": ignore_lights
-		}
-		parser.main(module_name, files=files, options=options)
-		sys.stdout = sys.__stdout__
-		print("Process complete!")
+			parser.vprint("This is a debug message", 'debug')
+
+			options = {
+				"log_level": "debug",
+				"log_to_file": True,
+				"refine_portals": portal_refinement,
+				"door_width": portal_width,
+				"grid_color": grid_color,
+				"author": author_name,
+				"do_cleanup": not disable_cleanup,
+				"ignore_lights": ignore_lights,
+				"portal_refine_output_override": True,
+			}
+			parser.main(module_name, files=files, options=options)
+			parser.vprint("Process complete!", 'debug')
 	elif event == "link_about":
-		print("Open about window")
+		parser.vprint("Open about window", 'debug')
 		win_about = gui.Window("About", layout_about, finalize=True)
 		win_about["link_website"].set_cursor("hand2")
 		win_about["link_github"].set_cursor("hand2")
 		win_about["link_dungeonfog"].set_cursor("hand2")
 		win_about["link_fantasygrounds"].set_cursor("hand2")
 	else:
-		print("Unknown event: '" + event + "'")
+		parser.vprint("Unknown event: '" + event + "'", 'error')
 
 	if win_about is not None:
 		event, values = win_about.read()
@@ -251,4 +252,6 @@ while True:
 		elif event == "link_fantasygrounds":
 			webbrowser.open("https://fantasygrounds.com")
 
+if window_query is not None:
+	window_query.close()
 window.close()
