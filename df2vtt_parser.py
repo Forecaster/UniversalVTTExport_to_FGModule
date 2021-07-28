@@ -19,7 +19,7 @@ import fg_module
 import utilib
 
 name = "DungeonFog FG Module Generator"
-version = "v1.2.1"
+version = "v1.2.2"
 
 log_levels = {
 	"fatal": "fatal",
@@ -41,10 +41,14 @@ log_level_ranks = {
 
 log_level = log_levels['warn']
 log_file = False
-def vprint(msg, level = 'info', log_file_override = False):
+
+def vprint(msg, level = 'info', log_file_override = None):
+	global log_level, log_file, log_level_ranks
+	if type(msg) != str:
+		msg = str(msg)
 	if level == 'init' or log_level_ranks[level] >= log_level_ranks[log_level]:
 		print("[" + level.upper() + "] " + msg)
-		if log_file_override or log_file:
+		if (log_file_override is not None and log_file_override) or log_file:
 			with open("output.log", "a") as f:
 				f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " [" + level.upper() + "] " + msg + "\n")
 
@@ -84,13 +88,19 @@ options_default = {
 	"portal_refine_output_override": False
 }
 
-def main(module_name, files, options = {}):
+def main(module_name, files, options = None):
 	global global_grid_size, options_default, log_level, log_file, portal_count_output
 
-	keys = options.keys()
-	for key in options_default.keys():
-		if not keys.__contains__(key):
-			options[key] = options_default[key]
+	if options is None:
+		options = options_default
+	else:
+		keys = options.keys()
+		for key in options_default.keys():
+			if not keys.__contains__(key):
+				options[key] = options_default[key]
+
+	vprint("Options:", 'debug')
+	vprint(str(options), 'debug')
 
 	if options.get('log_level'):
 		log_level = options['log_level']
@@ -234,7 +244,7 @@ def main(module_name, files, options = {}):
 						else:
 							query_portal = query_input("Specify type for portal #" + str(query_counter) + ": ")
 						if query_portal.startswith("portallist;"):
-							print("Portal refinement GUI override mode!")
+							vprint("Portal refinement GUI override mode!", 'debug')
 							query_portal = query_portal.split(";")[1:]
 							# print(query_portal)
 							for p in query_portal:
@@ -265,7 +275,7 @@ def main(module_name, files, options = {}):
 							except ValueError:
 								print("'" + query_portal + "' is invalid. Must be a number, 'list', or 'r'. Try again.")
 					if len(portal_key) > 1:
-						print("If you need to generate this module gain with the same portals you can paste this key into the portal 1 prompt: ", ";".join(portal_key))
+						print("If you need to generate this module again with the same portals you can paste this key into the portal 1 prompt: ", ";".join(portal_key))
 
 				portal_counter = 1
 				for portal in data["portals"]:
@@ -615,7 +625,8 @@ def do_args(arg_list):
 	vprint("Application starting", 'init', args.log_to_file)
 	vprint(name + " " + version, 'init', args.log_to_file)
 
-	log_level = args.log_level
+	if args.log_level is not None:
+		log_level = args.log_level
 
 	options = {
 		"log_level": args.log_level,

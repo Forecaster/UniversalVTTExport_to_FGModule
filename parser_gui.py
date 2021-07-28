@@ -1,7 +1,5 @@
 #!/usr/bin/env
 
-print("Application starting")
-
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 import df2vtt_parser as parser
 import PySimpleGUI as gui
@@ -11,14 +9,15 @@ import os
 import re
 import webbrowser
 
-print(parser.name + " " + parser.version)
+parser.vprint("Application starting", 'init')
+parser.vprint(parser.name + " " + parser.version, 'init')
 
 if len(sys.argv) > 1:
-	print("Arguments present. Running in command line mode. (Run without arguments to run in GUI mode.)")
-	parser.do_args(sys.argv)
-	exit(0)
+	parser.vprint("Arguments present. Running in command line mode. (Run without arguments to run in GUI mode.)", 'init')
+	parser.do_args(sys.argv[1:])
+	sys.exit(0)
 else:
-	print("No arguments present. Running in GUI mode.")
+	parser.vprint("No arguments present. Running in GUI mode.", 'init')
 
 more_options_visible = False
 

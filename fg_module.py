@@ -2,6 +2,7 @@
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 import shapely.geometry
+import df2vtt_parser as parser
 
 import utilib
 
@@ -84,13 +85,13 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 	inter_s = "s"
 	if intersection_counter == 1:
 		inter_s = ""
-	print("Intersection scan complete on " + str(wall_counter) + " walls. " + str(intersection_counter) + " intersection" + inter_s + " found.")
+	parser.vprint("Intersection scan complete on " + str(wall_counter) + " walls. " + str(intersection_counter) + " intersection" + inter_s + " found.", 'info')
 
 	img_xml_occluders = SubElement(layer, "occluders")
 	for occ in img_occluders:
 		occluder = generate_simple_occluder(occ["points"], occ["type"])
 		if occluder is None:
-			print("Type '" + occ["type"] + "' is not a valid simple occluder type.")
+			parser.vprint("Type '" + occ["type"] + "' is not a valid simple occluder type.", 'warn')
 		else:
 			img_xml_occluders.append(occluder)
 
