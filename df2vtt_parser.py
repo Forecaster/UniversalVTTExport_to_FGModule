@@ -170,15 +170,17 @@ def main(module_name, files, options = None):
 				filename_counter += 1
 				filename = match.group(1) + "_" + str(filename_counter)
 			used_image_names.append(filename + ext)
-			try:
-				os.mkdir("images")
-			except FileExistsError:
-				pass
-			with open("images/" + filename + ".png", 'wb') as f:
+			if not options['extract']:
+				try:
+					os.mkdir("images")
+				except FileExistsError:
+					pass
+				image_output_path = "images/" + filename + ".png"
+			if options['extract']:
+				image_output_path = filename + ".png"
+			with open(image_output_path, 'wb') as f:
 				f.write(imgdata)
 			to_zip.append("images/" + filename + ".png")
-			if options['extract']:
-				break
 
 			occluders_walls = []
 			occluders_portals = []
@@ -532,9 +534,13 @@ def main(module_name, files, options = None):
 			vprint(type(exception).__name__ + " - " + str(exception), 'trace')
 			vprint(traceback.format_exc(), 'trace')
 
+	if options['extract']:
+		vprint("Finished extraction", 'info')
+		sys.exit(0)
+
 	if successfully_processed == 0:
 		vprint("No files were successfully processed. No module will be generated.", 'fatal')
-		exit(0)
+		sys.exit(0)
 
 	library = SubElement(xml_client_root, "library")
 	module = SubElement(library, module_id, { "static": "true" })

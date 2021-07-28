@@ -218,7 +218,6 @@ while True:
 			parser.vprint("This is a debug message", 'debug')
 
 			options = {
-				"log_level": "debug",
 				"log_to_file": True,
 				"refine_portals": portal_refinement,
 				"door_width": portal_width,
