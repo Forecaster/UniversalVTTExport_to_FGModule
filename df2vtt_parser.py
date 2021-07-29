@@ -213,12 +213,14 @@ def main(module_name, files, options = None):
 					]
 
 					vprint("Refining " + str(portal_counter) + " portals in '" + filename + '_portals.png', 'info')
-					if options["portal_refine_output_override"] is None:
+					short_choice_list = []
+					if options["portal_refine_output_override"] is None or options["portal_refine_output_override"] is False:
 						print("A total of " + str(portal_counter) + " portals were found, these have been numbered in the file " + filename + "_portals.png in the working directory. Open this file and specify the desired type for each portal choosing from the following:")
 						for c in choices:
+							short_choice_list.append(str(c["val"]) + ": " + c["name"])
 							print(str(c["val"]) + " - " + c["desc"])
+						short_choice_list = ", ".join(short_choice_list)
 						print()
-						print("list - If you wish to see this list again type 'list' instead of the type number.")
 						print("1+ - You can enter a choice followed by + (ex: 2+) to set all remaining portals to that type.")
 						print("r - If you enter the wrong type you can type 'r' to go back one step. You can keep doing this to go back to the beginning if you want.")
 						print()
@@ -244,6 +246,7 @@ def main(module_name, files, options = None):
 						if type_override is not None:
 							query_portal = str(type_override)
 						else:
+							print(short_choice_list)
 							query_portal = query_input("Specify type for portal #" + str(query_counter) + ": ")
 						if query_portal.startswith("portallist;"):
 							vprint("Portal refinement GUI override mode!", 'debug')
@@ -256,11 +259,7 @@ def main(module_name, files, options = None):
 						if query_portal.endswith("+"):
 							query_portal = query_portal.replace("+", "")
 							type_override = int(query_portal)
-						if query_portal == "list":
-							for c in choices:
-								print(str(c["val"]) + " - " + c["desc"])
-							print()
-						elif query_portal == "r":
+						if query_portal == "r":
 							query_counter -= 1
 							query_counter = max(1, query_counter)
 						else:

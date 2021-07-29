@@ -40,7 +40,7 @@ class ModuleDefault extends BaseModule {
 			if (!empty(self::$author->GetValue()))
 				$auth = " -a \"" . self::$author->GetValue() . "\"";
 			chdir($dir_path);
-			$options = "-v";
+			$options = "";
 			if (self::$ignore_lights->IsChecked() == true)
 				$options .= "i";
 			if (self::$ignore_walls_and_doors->isChecked() == true)
@@ -263,10 +263,6 @@ class ModuleDefault extends BaseModule {
 		?>
 		<div class="divider"></div>
 		<p>The module name and list of files are passed to the script as normal. The module author field is passed to the script using the <code>-a</code> parameter.</p>
-		<p>Additional options passed to the script:</p>
-		<ul>
-			<li><code>-v</code> Makes the script output mor detailed information about what it's doing</li>
-		</ul>
 		<div class="divider"></div>
 		<?
 
