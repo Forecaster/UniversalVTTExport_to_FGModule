@@ -192,6 +192,20 @@ class ModuleDefault extends BaseModule {
 			<li>Doors, windows, toggleable walls, & illusory walls</li>
 			<li>Lighting</li>
 		</ul>
+		<h3>Video overview/tutorial</h3>
+		<div style="display: inline-block;">
+			<iframe width="560" height="315" src="https://www.youtube.com/embed/tdKJXDvQgN4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+		</div>
+		<div style="display: inline-block; vertical-align: top; margin-left: 10px;">
+			<b>Chapters:</b><br/>
+			00:00:00 - Chapter 0   - Introduction<br/>
+			00:05:27 - Chapter 1.1 - Executable & GUI<br/>
+			00:26:32 - Chapter 1.2 - Command line<br/>
+			00:49:01 - Chapter 2   - Web generator<br/>
+			00:52:16 - Chapter 3   - Python scripts<br/>
+			<br/>
+			<a href="https://youtu.be/tdKJXDvQgN4">Watch on YouTube</a>
+		</div>
 		<?
 		$what = new CollapsibleSection("What does this do?", array(
 			"<p>This generator takes one or more <code>.df2vtt</code> files exported from <a href='https://dungeonfog.com'>DungeonFog</a> and turns them into a module file for Fantasy Grounds. (One module can contain multiple maps)</p>",
