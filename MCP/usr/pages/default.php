@@ -194,7 +194,7 @@ class ModuleDefault extends BaseModule {
 		</ul>
 		<h3>Video overview/tutorial</h3>
 		<div style="display: inline-block;">
-			<iframe width="560" height="315" src="https://www.youtube.com/embed/tdKJXDvQgN4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+			<iframe width="560" height="315" src="https://www.youtube.com/embed/2MZ8xiXEB0g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 		</div>
 		<div style="display: inline-block; vertical-align: top; margin-left: 10px;">
 			<b>Chapters:</b><br/>
@@ -204,7 +204,7 @@ class ModuleDefault extends BaseModule {
 			00:49:01 - Chapter 2   - Web generator<br/>
 			00:52:16 - Chapter 3   - Python scripts<br/>
 			<br/>
-			<a href="https://youtu.be/tdKJXDvQgN4">Watch on YouTube</a>
+			<a href="https://youtu.be/2MZ8xiXEB0g">Watch on YouTube</a>
 		</div>
 		<?
 		$what = new CollapsibleSection("What does this do?", array(
