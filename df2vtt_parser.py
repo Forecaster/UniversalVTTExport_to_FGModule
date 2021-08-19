@@ -19,7 +19,7 @@ import fg_module
 import utilib
 
 name = "DungeonFog FG Module Generator"
-version = "v1.2.2"
+version = "v1.2.3"
 
 log_levels = {
 	"fatal": "fatal",
@@ -563,7 +563,7 @@ def main(module_name, files, options = None):
 	SubElement(xml_definition_root, "name").text = module_name
 	SubElement(xml_definition_root, "category")
 	SubElement(xml_definition_root, "author").text = options['author']
-	SubElement(xml_definition_root, "ruleset").text = "5E"
+	SubElement(xml_definition_root, "ruleset").text = "Any"
 
 	with open("definition.xml", 'wb') as f:
 		f.write(bytes(xml_version, "utf8") + tostring(xml_definition_root))

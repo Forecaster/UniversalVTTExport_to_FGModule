@@ -293,6 +293,9 @@ class ModuleDefault extends BaseModule {
 		<div class="divider"></div>
 		<p>The following changelog is for the module generator in general, including this web page, the application and the Python scripts. Changes, features, or fixes unless specified may apply to all of these.</p>
 		<div class="changelog">
+			<date>2021-08-19</date>
+			<release>v1.2.3</release>
+			<fix>Change from setting ruleset to <code>53</code> to setting it to <code>Any</code> (Should make the module available in most CoreRPG-based rulesets</fix>
 			<date>2021-07-28</date>
 			<release>v1.2.2</release>
 			<fix>Executable doesn't work in command line mode</fix>
