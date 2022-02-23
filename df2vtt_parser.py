@@ -19,7 +19,7 @@ import fg_module
 import utilib
 
 name = "DungeonFog FG Module Generator"
-version = "v1.2.3"
+version = "v1.2.4"
 
 log_levels = {
 	"fatal": "fatal",
@@ -67,6 +67,9 @@ def spos_x(pos):
 
 def spos_y(pos):
 	return str(pos_y(pos))
+
+def verify_portal(portal):
+	return portal["position"]["x"] and portal["position"]["y"] and portal["bounds"][0]["x"] and portal["bounds"][0]["y"] and portal["bounds"][1]["x"] and portal["bounds"][1]["y"] and portal["rotation"]
 
 options_default = {
 	"log_level": log_level,
@@ -198,8 +201,9 @@ def main(module_name, files, options = None):
 					portal_counter = 0
 					font = ImageFont.truetype("arial.ttf", 14)
 					for portal in data["portals"]:
-						portal_counter += 1
-						draw.text((portal["bounds"][0]["x"] * global_grid_size, portal["bounds"][0]["y"] * global_grid_size), str(portal_counter), font=font, stroke_width=4, stroke_fill=(0,0,0))
+						if verify_portal(portal):
+							portal_counter += 1
+							draw.text((portal["bounds"][0]["x"] * global_grid_size, portal["bounds"][0]["y"] * global_grid_size), str(portal_counter), font=font, stroke_width=4, stroke_fill=(0,0,0))
 					image_path = filename + "_portals.png"
 					source_img.save(image_path, "PNG")
 					cleanup.append(image_path)
@@ -280,22 +284,23 @@ def main(module_name, files, options = None):
 
 				portal_counter = 1
 				for portal in data["portals"]:
-					if options['refine_portals']:
-						try:
-							portal_type = portal_types[portal_counter]["name"]
-						except Exception:
-							vprint("No value for portal " + str(portal_counter) + " found. Assumed door.", 'debug')
+					if verify_portal(portal):
+						if options['refine_portals']:
+							try:
+								portal_type = portal_types[portal_counter]["name"]
+							except Exception:
+								vprint("No value for portal " + str(portal_counter) + " found. Assumed door.", 'debug')
+								portal_type = "door"
+						else:
 							portal_type = "door"
-					else:
-						portal_type = "door"
-					portal_counter += 1
-					if portal_type != "passage":
-						occluder_points = spos_x(portal["bounds"][0]["x"]) + "," + spos_y(portal["bounds"][0]["y"]) + "," + spos_x(portal["bounds"][1]["x"]) + "," + spos_y(portal["bounds"][1]["y"])
-						if portal_type != "toggleable_wall" and portal_type != "illusory_wall":
-							line = ((pos_x(portal["bounds"][0]["x"]), pos_y(portal["bounds"][0]["y"])), (pos_x(portal["bounds"][1]["x"]), pos_y(portal["bounds"][1]["y"])))
-							expand_points = utilib.expand_line(line, options['door_width'])
-							occluder_points = ",".join(utilib.tuple_to_point_list(expand_points, True))
-						occluders_portals.append({ "points": occluder_points, "type": portal_type })
+						portal_counter += 1
+						if portal_type != "passage":
+							occluder_points = spos_x(portal["bounds"][0]["x"]) + "," + spos_y(portal["bounds"][0]["y"]) + "," + spos_x(portal["bounds"][1]["x"]) + "," + spos_y(portal["bounds"][1]["y"])
+							if portal_type != "toggleable_wall" and portal_type != "illusory_wall":
+								line = ((pos_x(portal["bounds"][0]["x"]), pos_y(portal["bounds"][0]["y"])), (pos_x(portal["bounds"][1]["x"]), pos_y(portal["bounds"][1]["y"])))
+								expand_points = utilib.expand_line(line, options['door_width'])
+								occluder_points = ",".join(utilib.tuple_to_point_list(expand_points, True))
+							occluders_portals.append({ "points": occluder_points, "type": portal_type })
 
 			# Concealed door detection & fixing
 			if options['portal_intersect_fix_enabled']:
@@ -354,24 +359,26 @@ def main(module_name, files, options = None):
 									occluders_portals[pkey]["points"] = ",".join(portal_points)
 							# print(occluders_walls[wall_index_counter])
 						elif point_1_inside: # Same as previous, but with wall point 1
-							inter = utilib.get_polygon_intersect_points(wall_segment, portal_polygon)[0]
-							# print("inter", inter)
-							# print("point_1_inside", inter)
-							# print("Replace wall " + str(wall_index_counter), occluders_walls[wall_index_counter])
-							occluders_walls[wall_index_counter] = { "points": str(wall_segment[0][0]) + "," + str(wall_segment[0][1]) + "," + str(inter[0]) + "," + str(inter[1]), "type": "wall" }
-							if flat_portal:
-								distance_0 = utilib.distance(inter, portal_line[0])
-								distance_1 = utilib.distance(inter, portal_line[1])
-								# print("distance", distance_0, distance_1)
-								if distance_0 < distance_1:
-									portal_line = ( inter, portal_line[1] )
-									portal_points = utilib.tuple_to_point_list(portal_line, True)
-									occluders_portals[pkey]["points"] = ",".join(portal_points)
-								else:
-									portal_line = ( portal_line[0], inter )
-									portal_points = utilib.tuple_to_point_list(portal_line, True)
-									occluders_portals[pkey]["points"] = ",".join(portal_points)
-							# print(occluders_walls[wall_index_counter])
+							inter = utilib.get_polygon_intersect_points(wall_segment, portal_polygon)
+							if len(inter) > 0:
+								inter = inter[0]
+								# print("inter", inter)
+								# print("point_1_inside", inter)
+								# print("Replace wall " + str(wall_index_counter), occluders_walls[wall_index_counter])
+								occluders_walls[wall_index_counter] = { "points": str(wall_segment[0][0]) + "," + str(wall_segment[0][1]) + "," + str(inter[0]) + "," + str(inter[1]), "type": "wall" }
+								if flat_portal:
+									distance_0 = utilib.distance(inter, portal_line[0])
+									distance_1 = utilib.distance(inter, portal_line[1])
+									# print("distance", distance_0, distance_1)
+									if distance_0 < distance_1:
+										portal_line = ( inter, portal_line[1] )
+										portal_points = utilib.tuple_to_point_list(portal_line, True)
+										occluders_portals[pkey]["points"] = ",".join(portal_points)
+									else:
+										portal_line = ( portal_line[0], inter )
+										portal_points = utilib.tuple_to_point_list(portal_line, True)
+										occluders_portals[pkey]["points"] = ",".join(portal_points)
+								# print(occluders_walls[wall_index_counter])
 						else: # No wall points are within portal polygon: check if wall intersects with portal polygon
 							ints = []
 							if utilib.intersects(p_seg_1, wall_segment):
