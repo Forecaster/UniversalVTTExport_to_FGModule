@@ -68,6 +68,7 @@ class ModuleDefault extends BaseModule {
 	}
 
 	public static function Content1() {
+		$dl_url = "https://github.com/Forecaster/UniversalVTTExport_to_FGModule/releases";
 		?>
 		<style>
 			.error {
@@ -213,7 +214,7 @@ class ModuleDefault extends BaseModule {
 		$how_get = new CollapsibleSection("How do I use the generator?", array(
 			"<p><b>You have three choices for using the generator, and they are as follows:</b>",
 			"<ol><li>Use the limited online generator on this page. Easy.</li>",
-			"<li><a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/releases'>Download the executable</a> and run the generator locally. Intermediate.</li>",
+			"<li><a href='$dl_url'>Download the executable</a> and run the generator locally. Intermediate.</li>",
 			"<li><a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule'>Download the Python scripts</a> and run the generator via the commandline. Expert.</li></ol>",
 			"<p>Each of these have their own advantages and drawbacks. See the following sections for more information about each.</p>"), "h3");
 		$web_generator = new CollapsibleSection("Online Generator", array(
@@ -224,7 +225,7 @@ class ModuleDefault extends BaseModule {
 			"<li>The maximum total size of all the files combined is 50 MB.</li></ul>",
 			"<p>There are also no settings available for the online generator at the moment.</p>"), "h3");
 		$exe_generator = new CollapsibleSection("Executable", array(
-			"<p>You can <a href='https://github.com/Forecaster/UniversalVTTExport_to_FGModule/releases'>download the generator as an executable</a> which includes everything required to run it.</p>",
+			"<p>You can <a href='$dl_url'>download the generator as an executable</a> which includes everything required to run it.</p>",
 			"<p>With this you can generate modules locally on your system without an internet connection or having to send the map files anywhere. You also get access to more options, such as the portal refinement system, and more.</p>",
 			"<p>The executable can also be run from the commandline without the GUI if required.</p>"
 		), "h3");
@@ -249,6 +250,8 @@ class ModuleDefault extends BaseModule {
 			"<li>Reaching out to Forecaster on the <a href='https://dungeonfog.com/discord'>DungeonFog Discord Server</a> (Requires a Discord account)</li>",
 			"<li>Emailing forecaster at <a href='mailto:feedback@towerofawesome.org'>feedback@towerofawesome.org</a>. Put <code>df2vtt</code> in the subject please!§</li></ul>"), "h3");
 		?>
+		<h3 style="margin-top: 30px;">Download Application</h3>
+		<p>Go <a href="<?= $dl_url ?>">here</a> to download the application version of this tool!</p>
 		<h3 style="margin-top: 30px;">Generate Module</h3>
 		<h6>For the application version of the module generator see the sections below the form. Get more options and features by downloading the application.</h6>
 		<?
