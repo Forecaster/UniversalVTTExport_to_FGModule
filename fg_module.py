@@ -1,4 +1,4 @@
-
+import traceback
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 import shapely.geometry
@@ -75,8 +75,16 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 						# print(str(inters) + " is close to lineB2", utilib.points_close(lineB[1], inters))
 						if utilib.true_intersect_check(lineA, lineB, inters):
 							intersection_counter += 1
-							new_occ_a = { "points": str(lineA[0][0]) + "," + str(lineA[0][1]) + "," + str(inters[0]) + "," + str(inters[1]) + "," + str(lineA[1][0]) + "," + str(lineA[1][1]), "type": "wall" }
-							new_occ_b = { "points": str(lineB[0][0]) + "," + str(lineB[0][1]) + "," + str(inters[0]) + "," + str(inters[1]) + "," + str(lineB[1][0]) + "," + str(lineB[1][1]), "type": "wall" }
+							try:
+								new_occ_a = { "points": str(lineA[0][0]) + "," + str(lineA[0][1]) + "," + str(inters[0]) + "," + str(inters[1]) + "," + str(lineA[1][0]) + "," + str(lineA[1][1]), "type": "wall" }
+								new_occ_b = { "points": str(lineB[0][0]) + "," + str(lineB[0][1]) + "," + str(inters[0]) + "," + str(inters[1]) + "," + str(lineB[1][0]) + "," + str(lineB[1][1]), "type": "wall" }
+							except Exception:
+								print("Error during intersect check!")
+								print("lineA: " + str(lineA))
+								print("lineB: " + str(lineB))
+								print("Inters: " + str(inters))
+								print(traceback.format_exc())
+								exit()
 							# print(new_occ_a)
 							# print(new_occ_b)
 							img_occluders[a] = new_occ_a
@@ -85,13 +93,13 @@ def generate_image(fn, name, img_ext, grid_size, grid_color, img_occluders=None,
 	inter_s = "s"
 	if intersection_counter == 1:
 		inter_s = ""
-	parser.vprint("Intersection scan complete on " + str(wall_counter) + " walls. " + str(intersection_counter) + " intersection" + inter_s + " found.", 'info')
+	utilib.vprint("Intersection scan complete on " + str(wall_counter) + " walls. " + str(intersection_counter) + " intersection" + inter_s + " found.", 'info')
 
 	img_xml_occluders = SubElement(layer, "occluders")
 	for occ in img_occluders:
 		occluder = generate_simple_occluder(occ["points"], occ["type"])
 		if occluder is None:
-			parser.vprint("Type '" + occ["type"] + "' is not a valid simple occluder type.", 'warn')
+			utilib.vprint("Type '" + occ["type"] + "' is not a valid simple occluder type.", 'warn')
 		else:
 			img_xml_occluders.append(occluder)
 

@@ -90,6 +90,11 @@ def get_intersect_point(line1, line2):
 		return None
 
 def points_close(point1, point2, sensitivity = 1):
+	# vprint("points_close()", 'debug')
+	# vprint("point1 => " + str(point1), 'debug')
+	# vprint("point2 => " + str(point2), 'debug')
+	if point1 is None or point2 is None:
+		return False
 	x0 = point1[0]
 	y0 = point1[1]
 	x1 = point2[0]
@@ -101,6 +106,8 @@ def points_close(point1, point2, sensitivity = 1):
 	return False
 
 def true_intersect_check(line_a, line_b, intersect, sensitivity = 1):
+	if line_a is None or line_b is None or intersect is None:
+		return False
 	if points_close(line_a[0], intersect, sensitivity):
 		return False
 	if points_close(line_a[1], intersect, sensitivity):
@@ -169,3 +176,51 @@ def get_polygon_intersect_points(line, polygon):
 		if inter is not None:
 			intersections.append(inter)
 	return intersections
+
+timers = {}
+def timer_start(label):
+	import time
+	timers[label] = time.time()
+
+def timer_print(label):
+	import time
+	if timers.keys().__contains__(label):
+		current = time.time()
+		minutes = 0
+		seconds = current - timers[label]
+		string = "?"
+		if seconds >= 60:
+			seconds = round(seconds)
+			minutes = math.floor(seconds / 60)
+			seconds = seconds - (minutes * 60)
+		else:
+			seconds = round(seconds, 2)
+
+		if minutes >= 1 and seconds >= 1:
+			string = str(minutes) + " minutes and " + str(seconds) + " seconds"
+		elif minutes >= 1 and seconds < 1:
+			string = str(minutes) + " minutes"
+		else:
+			string = str(seconds) + " seconds"
+		print("'" + label + "' took " + string)
+
+log_level_ranks = {
+	'debug': 0,
+	'info': 1,
+	'warn': 2,
+	'error': 3,
+	'trace': 4,
+	'fatal': 5,
+}
+log_level = 'info'
+log_file = False
+def vprint(msg, level = 'info', log_file_override = None):
+	import datetime
+	global log_level, log_file, log_level_ranks
+	if type(msg) != str:
+		msg = str(msg)
+	if level == 'init' or log_level_ranks[level] >= log_level_ranks[log_level]:
+		print("[" + level.upper() + "] " + msg)
+		if (log_file_override is not None and log_file_override) or log_file:
+			with open("output.log", "a") as f:
+				f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " [" + level.upper() + "] " + msg + "\n")

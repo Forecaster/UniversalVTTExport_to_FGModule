@@ -19,38 +19,10 @@ import fg_module
 import utilib
 
 name = "DungeonFog FG Module Generator"
-version = "v1.2.4"
+version = "v1.2.5-dev-1"
 
-log_levels = {
-	"fatal": "fatal",
-	"trace": "trace",
-	"error": "error",
-	"warn": "warn",
-	"info": "info",
-	"debug": "debug",
-}
-
-log_level_ranks = {
-	'debug': 0,
-	'info': 1,
-	'warn': 2,
-	'error': 3,
-	'trace': 4,
-	'fatal': 5,
-}
-
-log_level = log_levels['warn']
+utilib.log_level = 'warn'
 log_file = False
-
-def vprint(msg, level = 'info', log_file_override = None):
-	global log_level, log_file, log_level_ranks
-	if type(msg) != str:
-		msg = str(msg)
-	if level == 'init' or log_level_ranks[level] >= log_level_ranks[log_level]:
-		print("[" + level.upper() + "] " + msg)
-		if (log_file_override is not None and log_file_override) or log_file:
-			with open("output.log", "a") as f:
-				f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " [" + level.upper() + "] " + msg + "\n")
 
 global_grid_size = 50
 portal_count_output = 0
@@ -72,8 +44,8 @@ def verify_portal(portal):
 	return portal["position"]["x"] and portal["position"]["y"] and portal["bounds"][0]["x"] and portal["bounds"][0]["y"] and portal["bounds"][1]["x"] and portal["bounds"][1]["y"] and portal["rotation"]
 
 options_default = {
-	"log_level": log_level,
-	"log_to_file": log_file,
+	"log_level": utilib.log_level,
+	"log_to_file": utilib.log_file,
 	"refine_portals": False,
 	"door_width": 10,
 	"grid_color": "00000000",
@@ -92,7 +64,7 @@ options_default = {
 }
 
 def main(module_name, files, options = None):
-	global global_grid_size, options_default, log_level, log_file, portal_count_output
+	global global_grid_size, options_default, portal_count_output
 
 	if options is None:
 		options = options_default
@@ -102,40 +74,40 @@ def main(module_name, files, options = None):
 			if not keys.__contains__(key):
 				options[key] = options_default[key]
 
-	vprint("Options:", 'debug')
-	vprint(str(options), 'debug')
+	utilib.vprint("Options:", 'debug')
+	utilib.vprint(str(options), 'debug')
 
 	if options.get('log_level'):
-		log_level = options['log_level']
+		utilib.log_level = options['log_level']
 
 	if options.get('log_to_file'):
-		log_file = options['log_to_file']
+		utilib.log_file = options['log_to_file']
 
-	vprint("Log level: " + str(log_level_ranks[log_level]) + ": " + log_level, 'init')
-	if log_file:
-		vprint("Logging output to 'output.log'", 'init')
+	utilib.vprint("Log level: " + str(utilib.log_level_ranks[utilib.log_level]) + ": " + utilib.log_level, 'init')
+	if utilib.log_file:
+		utilib.vprint("Logging output to 'output.log'", 'init')
 
 	try:
 		from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageColor
 	except ImportError:
 		if options['refine_portals']:
-			vprint("Import error. Unable to load Pillow module. This is required to use refine portals. Either run without -p or install the required module.", 'error')
-			vprint(traceback.format_exc(), 'trace')
+			utilib.vprint("Import error. Unable to load Pillow module. This is required to use refine portals. Either run without -p or install the required module.", 'error')
+			utilib.vprint(traceback.format_exc(), 'trace')
 			sys.exit(1)
 		if options['test_image']:
-			vprint("Import error. Unable to load Pillow module. This is required to generate test image. Either run without -p or install the required module.", 'error')
-			vprint(traceback.format_exc(), 'trace')
+			utilib.vprint("Import error. Unable to load Pillow module. This is required to generate test image. Either run without -p or install the required module.", 'error')
+			utilib.vprint(traceback.format_exc(), 'trace')
 			sys.exit(1)
 	try:
 		import shapely
 	except ImportError:
 		if not options['ignore_lights']:
-			vprint("Import error. Unable to load Shapely module. This is required to process lights and fix intersecting walls.", 'error')
-			vprint(traceback.format_exc(), 'trace')
+			utilib.vprint("Import error. Unable to load Shapely module. This is required to process lights and fix intersecting walls.", 'error')
+			utilib.vprint(traceback.format_exc(), 'trace')
 			sys.exit(1)
 
 	if options['extract']:
-		vprint("Extraction mode enabled!", 'info')
+		utilib.vprint("Extraction mode enabled!", 'info')
 
 	to_zip = []
 	used_image_names = []
@@ -153,7 +125,7 @@ def main(module_name, files, options = None):
 		try:
 			json_str = None
 			data = None
-			vprint("Processing file: " + file, 'info')
+			utilib.vprint("Processing file: " + file, 'info')
 			with open(file) as f:
 				json_str = f.read()
 			data = json.loads(json_str)
@@ -162,12 +134,20 @@ def main(module_name, files, options = None):
 
 			imgstring = data['image']
 
+			utilib.vprint("Decoding image data...", 'debug')
+			utilib.timer_start("Image decode")
 			imgdata = base64.b64decode(imgstring)
-			exp = re.compile("(.*\/)?(.*?)(\..{2,6})")
+			utilib.vprint("Image data decoded", 'debug')
+			utilib.timer_print("Image decode")
+			exp = re.compile("(.*[/\\\])?(.*?)(\..{2,6})")
 			match = exp.match(file)
+			utilib.vprint("Match: " + str(match), 'debug')
 			path = match.group(1)
+			utilib.vprint("Path: " + path, 'debug')
 			filename = match.group(2)
+			utilib.vprint("Filename: " + filename, 'debug')
 			ext = match.group(3)
+			utilib.vprint("Ext: " + ext, 'debug')
 			filename_counter = 0
 			while used_image_names.__contains__(filename + ext):
 				filename_counter += 1
@@ -188,6 +168,8 @@ def main(module_name, files, options = None):
 			occluders_walls = []
 			occluders_portals = []
 			if not options['ignore_occluders']:
+				utilib.vprint("Parsing occluders (walls, doors, etc)...", 'debug')
+				utilib.timer_start("Occluder parse")
 				if options['test_occluder']:
 					occluders_walls.append({ "points" : spos_x(0) + "," + spos_y(0) + "," + spos_x(1) + "," + spos_y(1), "type": "wall" })
 
@@ -216,7 +198,7 @@ def main(module_name, files, options = None):
 						{ "val": 5, "name": "illusory_wall",		"expand": True, "desc": "Illusory Wall: - Blocks LOS, never blocks path, cannot be toggled."},
 					]
 
-					vprint("Refining " + str(portal_counter) + " portals in '" + filename + '_portals.png', 'info')
+					utilib.vprint("Refining " + str(portal_counter) + " portals in '" + filename + '_portals.png', 'info')
 					short_choice_list = []
 					if options["portal_refine_output_override"] is None or options["portal_refine_output_override"] is False:
 						print("A total of " + str(portal_counter) + " portals were found, these have been numbered in the file " + filename + "_portals.png in the working directory. Open this file and specify the desired type for each portal choosing from the following:")
@@ -253,7 +235,7 @@ def main(module_name, files, options = None):
 							print(short_choice_list)
 							query_portal = query_input("Specify type for portal #" + str(query_counter) + ": ")
 						if query_portal.startswith("portallist;"):
-							vprint("Portal refinement GUI override mode!", 'debug')
+							utilib.vprint("Portal refinement GUI override mode!", 'debug')
 							query_portal = query_portal.split(";")[1:]
 							# print(query_portal)
 							for p in query_portal:
@@ -289,7 +271,7 @@ def main(module_name, files, options = None):
 							try:
 								portal_type = portal_types[portal_counter]["name"]
 							except Exception:
-								vprint("No value for portal " + str(portal_counter) + " found. Assumed door.", 'debug')
+								utilib.vprint("No value for portal " + str(portal_counter) + " found. Assumed door.", 'debug')
 								portal_type = "door"
 						else:
 							portal_type = "door"
@@ -301,9 +283,13 @@ def main(module_name, files, options = None):
 								expand_points = utilib.expand_line(line, options['door_width'])
 								occluder_points = ",".join(utilib.tuple_to_point_list(expand_points, True))
 							occluders_portals.append({ "points": occluder_points, "type": portal_type })
+				utilib.vprint("Occluder processing completed", 'debug')
+				utilib.timer_print("Occluder parse")
 
 			# Concealed door detection & fixing
 			if options['portal_intersect_fix_enabled']:
+				utilib.vprint("Portal fixing...", 'debug')
+				utilib.timer_start("Portal fixing")
 				for pkey, portal in enumerate(occluders_portals):
 					new_segments = []
 					portal_points = portal["points"].split(",")
@@ -440,16 +426,24 @@ def main(module_name, files, options = None):
 							if val == "delete":
 								occluders_walls.pop(key)
 								break
+				utilib.vprint("Portal fixing complete", 'debug')
+				utilib.timer_print("Portal fixing")
 
 			lights = []
 			if not options['ignore_lights']:
+				utilib.vprint("Applying light sources...", 'debug')
+				utilib.timer_start("Light sources")
 				if data["lights"].__len__() > 0:
 					for light in data["lights"]:
 						lights.append({ "x": pos_x(light["position"]["x"]), "y": pos_y(light["position"]["y"]), "color": light["color"], "range_tiles": light["range"], "range_pixels": light["range"] * pixels_per_grid, "range_real": light["range"] * options['grid_size_real']})
+				utilib.vprint("Lights applied", 'debug')
+				utilib.timer_print("Light sources")
 			else:
-				vprint("Ignoring lights")
+				utilib.vprint("Ignoring lights")
 
 			occluders = occluders_walls + occluders_portals
+			# utilib.vprint("Occluder list:", 'debug')
+			# utilib.vprint(occluders, 'debug')
 			offset_x = pos_x(data["resolution"]["map_size"]["x"]) / 2 # This is correct! Don't touch!
 			offset_y = pos_y((data["resolution"]["map_size"]["y"]) / 2)
 			image_path = "images/" + filename + ".png"
@@ -458,6 +452,7 @@ def main(module_name, files, options = None):
 			counter += 1
 
 			if options['test_image'] or options['test_image_textless']:
+				utilib.vprint("Generating test image...", 'debug')
 				font = ImageFont.truetype("arial.ttf", 8)
 				wall_color = (255,0,0)
 				source_img = Image.open("images/" + filename + ".png").convert("RGBA")
@@ -532,20 +527,21 @@ def main(module_name, files, options = None):
 						y1 = -p[1] + 2
 						draw.ellipse([x0, y0, x1, y1], fill=(0,0,0))
 				source_img.save(filename + "_test_image.png", "PNG")
+				utilib.vprint("Test image generated", 'debug')
 			successfully_processed += 1
 		except FileNotFoundError:
-			vprint("An error occurred when opening the file '" + file + "'. It will be skipped.", 'error')
+			utilib.vprint("An error occurred when opening the file '" + file + "'. It will be skipped.", 'error')
 		except Exception as exception:
-			vprint("An unexpected error occurred when opening the file '" + file + "'. It will be skipped.", 'error')
-			vprint(type(exception).__name__ + " - " + str(exception), 'trace')
-			vprint(traceback.format_exc(), 'trace')
+			utilib.vprint("An unexpected error occurred when opening the file '" + file + "'. It will be skipped.", 'error')
+			utilib.vprint(type(exception).__name__ + " - " + str(exception), 'trace')
+			utilib.vprint(traceback.format_exc(), 'trace')
 
 	if options['extract']:
-		vprint("Finished extraction", 'info')
+		utilib.vprint("Finished extraction", 'info')
 		sys.exit(0)
 
 	if successfully_processed == 0:
-		vprint("No files were successfully processed. No module will be generated.", 'fatal')
+		utilib.vprint("No files were successfully processed. No module will be generated.", 'fatal')
 		sys.exit(0)
 
 	library = SubElement(xml_client_root, "library")
@@ -586,22 +582,22 @@ def main(module_name, files, options = None):
 		s = "s"
 		if counter == 1:
 			s = ""
-		vprint("Finished processing (" + str(counter) + " file" + s + ")", 'info')
+		utilib.vprint("Finished processing (" + str(counter) + " file" + s + ")", 'info')
 	else:
-		vprint("No files were processed!", 'warn')
+		utilib.vprint("No files were processed!", 'warn')
 
 	if options['do_cleanup']:
-		vprint("Cleaning up working directory...", 'info')
+		utilib.vprint("Cleaning up working directory...", 'info')
 		for path in cleanup:
-			vprint("Deleting '" + path + "'", 'debug')
+			utilib.vprint("Deleting '" + path + "'", 'debug')
 			os.remove(path)
-		vprint("Deleting 'images' dir", 'debug')
+		utilib.vprint("Deleting 'images' dir", 'debug')
 		try:
 			os.rmdir("images")
 		except OSError:
-			vprint("Skipped removing image directory because it contains other files.", 'warn')
+			utilib.vprint("Skipped removing image directory because it contains other files.", 'warn')
 	else:
-		vprint("Skipped cleanup due to arguments", 'info')
+		utilib.vprint("Skipped cleanup due to arguments", 'info')
 	print(module_id + "." + options['extension'])
 
 def get_argparse():
@@ -610,7 +606,7 @@ def get_argparse():
 	parser.add_argument('files', metavar='F', nargs='+', help="One or more paths to df2vtt files to parse into a module.")
 	parser.add_argument('-a', dest='author', default='DungeonFog', help="Set a custom module author. (Default: DungeonFog)")
 	parser.add_argument('-d', dest='door_width', default=10, type=int, nargs=1, help="Specify door width. (Default: 10)")
-	parser.add_argument('-v', dest='log_level', help="The log level to use. Options are " + ", ".join(log_levels) + ". Default: " + log_level)
+	parser.add_argument('-v', dest='log_level', help="The log level to use. Options are " + ", ".join(utilib.log_level_ranks) + ". Default: " + utilib.log_level)
 	parser.add_argument('-e', dest='extension', default='mod', help="The desired file name extension for the output module file (eg. zip). (Default: mod)")
 	parser.add_argument('-g', dest='grid_color', default='00000000', help="The grid color. (Default: 00000000)")
 	parser.add_argument('--version', action='version', version=name + ' ' + version)
@@ -630,15 +626,14 @@ def get_argparse():
 query_input = input
 
 def do_args(arg_list):
-	global log_level, log_file
 	arg_parser = get_argparse()
 	args = arg_parser.parse_args(arg_list)
 
-	vprint("Application starting", 'init', args.log_to_file)
-	vprint(name + " " + version, 'init', args.log_to_file)
+	utilib.vprint("Application starting", 'init', args.log_to_file)
+	utilib.vprint(name + " " + version, 'init', args.log_to_file)
 
 	if args.log_level is not None:
-		log_level = args.log_level
+		utilib.log_level = args.log_level
 
 	options = {
 		"log_level": args.log_level,

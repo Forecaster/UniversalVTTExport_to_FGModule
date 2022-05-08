@@ -4,20 +4,21 @@ from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 import df2vtt_parser as parser
 import PySimpleGUI as gui
 from io import StringIO
+import webbrowser
+import utilib
 import sys
 import os
 import re
-import webbrowser
 
-parser.vprint("Application starting", 'init')
-parser.vprint(parser.name + " " + parser.version, 'init')
+utilib.vprint("Application starting", 'init')
+utilib.vprint(parser.name + " " + parser.version, 'init')
 
 if len(sys.argv) > 1:
-	parser.vprint("Arguments present. Running in command line mode. (Run without arguments to run in GUI mode.)", 'init')
+	utilib.vprint("Arguments present. Running in command line mode. (Run without arguments to run in GUI mode.)", 'init')
 	parser.do_args(sys.argv[1:])
 	sys.exit(0)
 else:
-	parser.vprint("No arguments present. Running in GUI mode.", 'init')
+	utilib.vprint("No arguments present. Running in GUI mode.", 'init')
 
 more_options_visible = False
 
@@ -84,7 +85,7 @@ def query_input(query):
 				window_query["ddl_portal"].Update(portals[query_counter])
 			except IndexError:
 				window_query["ddl_portal"].Update("")
-		parser.vprint("Query done! (" + event + ")", 'debug')
+		utilib.vprint("Query done! (" + event + ")", 'debug')
 		try:
 			portals[query_counter] = values["ddl_portal"]
 		except IndexError:
@@ -210,12 +211,12 @@ while True:
 			except AttributeError:
 				files = []
 
-			parser.vprint("Processing " + str(len(files)) + " file(s)...", 'info')
+			utilib.vprint("Processing " + str(len(files)) + " file(s)...", 'info')
 
 			parser.query_input = query_input
 			parser.log_file = True
 
-			parser.vprint("This is a debug message", 'debug')
+			utilib.vprint("This is a debug message", 'debug')
 
 			options = {
 				"log_to_file": True,
@@ -228,16 +229,16 @@ while True:
 				"portal_refine_output_override": True,
 			}
 			parser.main(module_name, files=files, options=options)
-			parser.vprint("Process complete!", 'debug')
+			utilib.vprint("Process complete!", 'debug')
 	elif event == "link_about":
-		parser.vprint("Open about window", 'debug')
+		utilib.vprint("Open about window", 'debug')
 		win_about = gui.Window("About", layout_about, finalize=True)
 		win_about["link_website"].set_cursor("hand2")
 		win_about["link_github"].set_cursor("hand2")
 		win_about["link_dungeonfog"].set_cursor("hand2")
 		win_about["link_fantasygrounds"].set_cursor("hand2")
 	else:
-		parser.vprint("Unknown event: '" + event + "'", 'error')
+		utilib.vprint("Unknown event: '" + event + "'", 'error')
 
 	if win_about is not None:
 		event, values = win_about.read()
